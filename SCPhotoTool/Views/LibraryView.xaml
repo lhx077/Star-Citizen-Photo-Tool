@@ -1,0 +1,238 @@
+<UserControl x:Class="SCPhotoTool.Views.LibraryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SCPhotoTool.Views"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="750" d:DesignWidth="1100">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        
+        <!-- 标题栏 -->
+        <TextBlock Grid.Row="0" Text="照片库" 
+                   FontSize="24" FontWeight="SemiBold" Foreground="White" 
+                   Margin="24,16,0,24" />
+        
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            
+            <!-- 左侧标签过滤面板 -->
+            <materialDesign:Card Grid.Column="0" Background="#161D2E" UniformCornerRadius="8" Margin="16,0,8,16">
+                <DockPanel Margin="16">
+                    <TextBlock DockPanel.Dock="Top" Text="标签" 
+                               FontSize="18" 
+                               Foreground="White" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,16" />
+                    
+                    <Button DockPanel.Dock="Bottom" 
+                            Style="{StaticResource MaterialDesignFlatButton}" 
+                            Background="#283758" 
+                            Foreground="#5C93FF"
+                            Command="{Binding RefreshTagsCommand}"
+                            Margin="0,8,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Refresh" Width="18" Height="18"/>
+                            <TextBlock Text="刷新标签" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <TextBlock DockPanel.Dock="Bottom" 
+                               Text="当前已选择 {Binding SelectedTags.Count} 个标签" 
+                               FontSize="12" Foreground="#78909C" Margin="0,16,0,8" />
+                    
+                    <Button DockPanel.Dock="Bottom" 
+                            Style="{StaticResource MaterialDesignFlatButton}" 
+                            Background="#283758" 
+                            Foreground="#5C93FF"
+                            Command="{Binding ClearTagsCommand}"
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="NotificationClearAll" Width="18" Height="18"/>
+                            <TextBlock Text="清除标签" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- 标签列表 -->
+                    <ListBox ItemsSource="{Binding Tags}" 
+                             SelectedItem="{Binding SelectedTag}"
+                             SelectionMode="Multiple"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             Background="Transparent"
+                             BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding}" 
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay}" 
+                                          Foreground="White"
+                                          Checked="TagCheckBox_Checked"
+                                          Unchecked="TagCheckBox_Unchecked"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </materialDesign:Card>
+            
+            <!-- 右侧照片网格 -->
+            <materialDesign:Card Grid.Column="1" Background="#161D2E" UniformCornerRadius="8" Margin="8,0,16,16">
+                <DockPanel Margin="16">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,16">
+                        <TextBlock Text="照片库" 
+                                   FontSize="18" 
+                                   Foreground="White" 
+                                   FontWeight="Medium"
+                                   VerticalAlignment="Center"/>
+                        
+                        <TextBlock Text="{Binding Photos.Count, StringFormat={}（共 {0} 张）}" 
+                                   FontSize="14" 
+                                   Foreground="#ADBBC4"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"/>
+                        
+                        <TextBlock Text="|" 
+                                   Margin="16,0" 
+                                   Foreground="#455A64" 
+                                   VerticalAlignment="Center"/>
+                        
+                        <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                Command="{Binding ImportPhotosCommand}"
+                                ToolTip="导入新照片" 
+                                Foreground="#5C93FF">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ImagePlus" Width="18" Height="18"/>
+                                <TextBlock Text="导入照片" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
+                                     Value="0" IsIndeterminate="True" 
+                                     Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                                     Width="24" Height="24" 
+                                     Margin="16,0,0,0"/>
+                    </StackPanel>
+                    
+                    <!-- 搜索框 -->
+                    <TextBox DockPanel.Dock="Top" 
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="搜索照片"
+                             materialDesign:TextFieldAssist.HasClearButton="True"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                        </TextBox.InputBindings>
+                        <TextBox.Background>
+                            <SolidColorBrush Color="Transparent"/>
+                        </TextBox.Background>
+                    </TextBox>
+                    
+                    <!-- 照片网格 -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredPhotos}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <materialDesign:Card Margin="8" Width="200" Height="240" UniformCornerRadius="4">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <!-- 照片缩略图 -->
+                                            <Border Grid.Row="0" Background="#111827">
+                                                <Image Source="{Binding ThumbnailImage}" 
+                                                       Stretch="Uniform"
+                                                       VerticalAlignment="Center"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="8"/>
+                                            </Border>
+                                            
+                                            <!-- 照片信息区 -->
+                                            <StackPanel Grid.Row="1" Margin="8">
+                                                <TextBlock Text="{Binding Title}" 
+                                                           FontWeight="Medium" 
+                                                           Foreground="White" 
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                
+                                                <TextBlock Text="{Binding DateTaken, StringFormat=yyyy-MM-dd}" 
+                                                           FontSize="12" 
+                                                           Foreground="#78909C" 
+                                                           Margin="0,4,0,0"/>
+                                                
+                                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                                            Padding="8,4"
+                                                            Command="{Binding DataContext.EditPhotoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="编辑">
+                                                        <materialDesign:PackIcon Kind="Edit" Width="18" Height="18" Foreground="#5C93FF"/>
+                                                    </Button>
+                                                    
+                                                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                                            Padding="8,4"
+                                                            Command="{Binding DataContext.ViewPhotoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="查看">
+                                                        <materialDesign:PackIcon Kind="Eye" Width="18" Height="18" Foreground="#5C93FF"/>
+                                                    </Button>
+                                                    
+                                                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                                            Padding="8,4"
+                                                            Command="{Binding DataContext.DeletePhotoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="删除">
+                                                        <materialDesign:PackIcon Kind="DeleteOutline" Width="18" Height="18" Foreground="#FF5252"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            
+                                            <!-- 标签指示器 -->
+                                            <ItemsControl Grid.Row="0" 
+                                                          ItemsSource="{Binding Tags}" 
+                                                          VerticalAlignment="Top" 
+                                                          HorizontalAlignment="Left"
+                                                          Margin="8,8,0,0">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="#80000000" 
+                                                                CornerRadius="4" 
+                                                                Padding="4,2" 
+                                                                Margin="0,0,4,4">
+                                                            <TextBlock Text="{Binding}" 
+                                                                       Foreground="White" 
+                                                                       FontSize="10"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Grid>
+                                    </materialDesign:Card>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </materialDesign:Card>
+        </Grid>
+    </Grid>
+</UserControl> 

@@ -1,0 +1,324 @@
+<UserControl x:Class="SCPhotoTool.Views.PhotoEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SCPhotoTool.Views"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 工具栏 -->
+        <materialDesign:Card Grid.Row="0" Margin="0,0,0,16" Padding="16" UniformCornerRadius="8" Background="#1E2842">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" Grid.Column="0">
+                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
+                            Command="{Binding OpenImageCommand}"
+                            Margin="0,0,8,0"
+                            ToolTip="打开图像"
+                            Background="#283758" 
+                            Foreground="#4C83FF"
+                            BorderBrush="#4C83FF"
+                            materialDesign:ButtonAssist.CornerRadius="6">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FolderOpen" Width="18" Height="18" Margin="0,0,8,0"/>
+                            <TextBlock Text="打开"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
+                            Command="{Binding SaveImageCommand}"
+                            Margin="0,0,8,0"
+                            ToolTip="保存图像"
+                            Background="#283758" 
+                            Foreground="#4C83FF"
+                            BorderBrush="#4C83FF"
+                            materialDesign:ButtonAssist.CornerRadius="6">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,8,0"/>
+                            <TextBlock Text="保存"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" 
+                           Text="{Binding StatusMessage}" 
+                           VerticalAlignment="Center" 
+                           HorizontalAlignment="Center"
+                           Foreground="White"/>
+
+                <ProgressBar Grid.Column="2" 
+                             IsIndeterminate="True" 
+                             Width="100" 
+                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                             Style="{StaticResource MaterialDesignCircularProgressBar}"
+                             Value="0"
+                             Foreground="#4C83FF"/>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- 主要内容区域 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 图像显示区域 -->
+            <Border Grid.Column="0" Background="#192132" Margin="0,0,16,0" CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 图像预览 -->
+                    <Border Margin="16" CornerRadius="4" Background="#151B2C" BorderBrush="#4C83FF" BorderThickness="1">
+                        <Grid>
+                            <Image Source="{Binding PreviewImage}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                            <!-- 裁剪区域 -->
+                            <Border Visibility="{Binding IsCropping, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Background="#40000000" Margin="0">
+                                <Canvas>
+                                    <Border Canvas.Left="{Binding CropLeft}" Canvas.Top="{Binding CropTop}" 
+                                            Width="{Binding CropWidth}" Height="{Binding CropHeight}"
+                                            BorderBrush="#4C83FF" BorderThickness="2" Background="Transparent">
+                                        <Border.Effect>
+                                            <DropShadowEffect ShadowDepth="0" BlurRadius="10" Color="#4C83FF" Opacity="0.7"/>
+                                        </Border.Effect>
+                                    </Border>
+                                </Canvas>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- 裁剪控制区域 -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
+                                Visibility="{Binding IsCropping, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                            <TextBlock Text="左: " Foreground="White" VerticalAlignment="Center"/>
+                            <Slider Width="100" Minimum="0" Maximum="{Binding OriginalWidth}" Value="{Binding CropLeft}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                            <TextBlock Text="上: " Foreground="White" VerticalAlignment="Center"/>
+                            <Slider Width="100" Minimum="0" Maximum="{Binding OriginalHeight}" Value="{Binding CropTop}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                            <TextBlock Text="宽: " Foreground="White" VerticalAlignment="Center"/>
+                            <Slider Width="100" Minimum="10" Maximum="{Binding OriginalWidth}" Value="{Binding CropWidth}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="高: " Foreground="White" VerticalAlignment="Center"/>
+                            <Slider Width="100" Minimum="10" Maximum="{Binding OriginalHeight}" Value="{Binding CropHeight}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 编辑面板 -->
+            <materialDesign:Card Grid.Column="1" Background="#1E2842" UniformCornerRadius="8" Padding="16">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" RenderTransformOrigin="0.5,0.5">
+                    <ScrollViewer.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleY="0.193"/>
+                            <RotateTransform/>
+                            <TranslateTransform Y="0.397"/>
+                        </TransformGroup>
+                    </ScrollViewer.RenderTransform>
+                    <StackPanel>
+                        <!-- 滤镜选择 -->
+                        <Expander Header="滤镜" IsExpanded="True" Foreground="White" Background="#192132" Margin="0,0,0,16">
+                            <StackPanel Margin="16">
+                                <ComboBox ItemsSource="{Binding Filters}" 
+                                          SelectedItem="{Binding SelectedFilter}" 
+                                          Margin="0,0,0,8"
+                                          materialDesign:HintAssist.Hint="选择滤镜"
+                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                          Background="#283758"/>
+
+                                <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                        Command="{Binding ApplyFilterCommand}" 
+                                        Margin="0,8,0,0"
+                                        Background="#283758" 
+                                        Foreground="#4C83FF"
+                                        materialDesign:ButtonAssist.CornerRadius="6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ImageFilter" Width="18" Height="18" Margin="0,0,8,0"/>
+                                        <TextBlock Text="应用滤镜"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Expander>
+
+                        <!-- 裁剪控制 -->
+                        <Expander Header="裁剪" IsExpanded="True" Foreground="White" Background="#192132" Margin="0,0,0,16">
+                            <StackPanel Margin="16">
+                                <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                        Command="{Binding StartCropCommand}" 
+                                        Margin="0,0,0,8"
+                                        Background="#283758" 
+                                        Foreground="#4C83FF"
+                                        materialDesign:ButtonAssist.CornerRadius="6"
+                                        Visibility="{Binding IsCropping, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ContentCut" Width="18" Height="18" Margin="0,0,8,0"/>
+                                        <TextBlock Text="开始裁剪"/>
+                                    </StackPanel>
+                                </Button>
+                                <StackPanel Orientation="Horizontal" 
+                                          Visibility="{Binding IsCropping, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                            Command="{Binding ApplyCropCommand}" 
+                                            Margin="0,0,8,0"
+                                            Background="#283758" 
+                                            Foreground="#4C83FF"
+                                            materialDesign:ButtonAssist.CornerRadius="6">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Check" Width="18" Height="18" Margin="0,0,8,0"/>
+                                            <TextBlock Text="应用"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                            Command="{Binding CancelCropCommand}" 
+                                            Background="#283758" 
+                                            Foreground="#EB5545"
+                                            materialDesign:ButtonAssist.CornerRadius="6">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Close" Width="18" Height="18" Margin="0,0,8,0"/>
+                                            <TextBlock Text="取消"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+
+                        <!-- 照片信息 -->
+                        <Expander Header="照片信息" IsExpanded="True" Foreground="White" Background="#192132" Margin="0,0,0,16">
+                            <StackPanel Margin="16">
+                                <TextBox Text="{Binding PhotoInfo.Author}" 
+                                         Margin="0,0,0,8" 
+                                         materialDesign:HintAssist.Hint="作者"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Foreground="White"/>
+
+                                <TextBox Text="{Binding PhotoInfo.Description}" 
+                                         Margin="0,0,0,8" 
+                                         materialDesign:HintAssist.Hint="描述"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Foreground="White"/>
+
+                                <TextBox Text="{Binding PhotoInfo.Location}" 
+                                         Margin="0,0,0,8" 
+                                         materialDesign:HintAssist.Hint="地点"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Foreground="White"/>
+
+                                <TextBox Text="{Binding PhotoInfo.Copyright}" 
+                                         Margin="0,0,0,8" 
+                                         materialDesign:HintAssist.Hint="版权信息"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Foreground="White"/>
+
+                                <GroupBox Header="相机信息" Margin="0,8,0,8" Foreground="White">
+                                    <StackPanel>
+                                        <TextBox Text="{Binding PhotoInfo.CameraModel}" 
+                                                 Margin="0,8,0,8" 
+                                                 materialDesign:HintAssist.Hint="相机型号"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 Foreground="White"/>
+
+                                        <TextBox Text="{Binding PhotoInfo.CameraManufacturer}" 
+                                                 Margin="0,0,0,8" 
+                                                 materialDesign:HintAssist.Hint="制造商"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 Foreground="White"/>
+
+                                        <TextBox Text="{Binding PhotoInfo.LensInfo}" 
+                                                 Margin="0,0,0,8" 
+                                                 materialDesign:HintAssist.Hint="镜头信息"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 Foreground="White"/>
+                                    </StackPanel>
+                                </GroupBox>
+
+                                <GroupBox Header="拍摄参数" Margin="0,8,0,8" Foreground="White">
+                                    <StackPanel>
+                                        <TextBox Text="{Binding PhotoInfo.ExposureTime}" 
+                                                 Margin="0,8,0,8" 
+                                                 materialDesign:HintAssist.Hint="曝光时间"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 Foreground="White"/>
+
+                                        <TextBox Text="{Binding PhotoInfo.Aperture}" 
+                                                 Margin="0,0,0,8" 
+                                                 materialDesign:HintAssist.Hint="光圈"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 Foreground="White"/>
+
+                                        <TextBox Text="{Binding PhotoInfo.ISO}" 
+                                                 Margin="0,0,0,8" 
+                                                 materialDesign:HintAssist.Hint="ISO"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 Foreground="White"/>
+
+                                        <TextBox Text="{Binding PhotoInfo.DateTaken}" 
+                                                 Margin="0,0,0,8" 
+                                                 materialDesign:HintAssist.Hint="拍摄日期"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 Foreground="White"/>
+                                    </StackPanel>
+                                </GroupBox>
+
+                                <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                        Command="{Binding AddWatermarkCommand}" 
+                                        Margin="0,8,0,0"
+                                        Background="#283758" 
+                                        Foreground="#4C83FF"
+                                        materialDesign:ButtonAssist.CornerRadius="6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ImageText" Width="18" Height="18" Margin="0,0,8,0"/>
+                                        <TextBlock Text="添加水印"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </materialDesign:Card>
+        </Grid>
+
+        <!-- 状态栏 -->
+        <materialDesign:Card Grid.Row="2" Margin="0,16,0,0" Padding="16" UniformCornerRadius="8" Background="#1E2842">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding CurrentImagePath}" Foreground="White" TextTrimming="CharacterEllipsis"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="原始尺寸: " Foreground="#78909C" Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding OriginalWidth, StringFormat={}{0:0}}" Foreground="White"/>
+                    <TextBlock Text=" x " Foreground="White"/>
+                    <TextBlock Text="{Binding OriginalHeight, StringFormat={}{0:0}}" Foreground="White"/>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+    </Grid>
+</UserControl> 

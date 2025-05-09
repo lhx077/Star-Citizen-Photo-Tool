@@ -1,0 +1,120 @@
+## 忽略Visual Studio临时文件、构建结果和
+## 由Visual Studio生成的文件
+
+# 用户特定的文件
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+# 构建结果
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+obj/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Visual Studio缓存/选项目录
+.vs/
+.vscode/
+*.code-workspace
+
+# Rider
+.idea/
+*.sln.iml
+
+# Visual Studio内存快照
+*.diagsession
+
+# MSTest测试结果
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+
+# 构建结果
+*_i.c
+*_p.c
+*_i.h
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Visual Studio生成的临时文件
+**/*.DesktopClient/GeneratedArtifacts
+**/*.DesktopClient/ModelManifest.xml
+**/*.Server/GeneratedArtifacts
+**/*.Server/ModelManifest.xml
+_Pvt_Extensions
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# 发布Web输出
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+
+# NuGet包
+*.nupkg
+# 包文件夹可以被还原，所以可以忽略
+**/packages/*
+# 除非你想要提交包文件夹
+!**/packages/build/
+# 如果使用PackageReference，以下可以被注释掉
+!**/packages/repositories.config
+# NuGet v3的项目.json文件生成的文件
+*.nuget.props
+*.nuget.targets
+
+# Backup文件
+UpgradeLog*.XML
+UpgradeLog*.htm
+ServiceFabricBackup/
+*.rptproj.bak
+
+# SQL Server文件
+*.mdf
+*.ldf
+*.ndf
+
+# 临时文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 特定于项目的文件夹
+[Ss]creenshots/
+[Tt]emp/ 
