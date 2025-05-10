@@ -218,7 +218,17 @@ namespace SCPhotoTool.ViewModels
                 // 检查游戏是否连接
                 if (!_gameIntegrationService.IsConnected && !_gameIntegrationService.Connect())
                 {
-                    StatusMessage = "未找到游戏窗口，改为全屏截图";
+                    StatusMessage = "未找到游戏窗口";
+                    
+                    // 显示自定义消息提示
+                    Application.Current.Dispatcher.Invoke(() => {
+                        Views.MessageWindow.ShowMessage(
+                            "未能找到星际公民游戏窗口。请确保游戏已运行或尝试使用全屏截图模式。",
+                            "游戏窗口未找到",
+                            Views.MessageWindow.MessageType.Warning);
+                    });
+                    
+                    // 切换到全屏模式
                     await CaptureFullScreenAsync();
                     return;
                 }
@@ -249,6 +259,9 @@ namespace SCPhotoTool.ViewModels
                 {
                     await SaveScreenshotAsync();
                 }
+                
+                // 保存设置
+                SaveSettings();
             }
             catch (Exception ex)
             {
@@ -520,12 +533,5 @@ namespace SCPhotoTool.ViewModels
                 return bitmapImage;
             }
         }
-    }
-    
-    public enum CaptureMode
-    {
-        GameWindow,
-        SelectedArea,
-        FullScreen
     }
 } 

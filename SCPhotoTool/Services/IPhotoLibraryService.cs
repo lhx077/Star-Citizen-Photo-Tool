@@ -27,22 +27,22 @@ namespace SCPhotoTool.Services
         /// <param name="photoPath">照片文件路径</param>
         /// <param name="tags">照片标签</param>
         /// <returns>新增的照片对象</returns>
-        Task<Photo> AddPhotoAsync(string photoPath, IEnumerable<string> tags = null);
+        Task<Photo> AddPhotoAsync(string photoPath, IEnumerable<string> tags);
         
         /// <summary>
         /// 更新照片信息
         /// </summary>
         /// <param name="photoId">照片ID</param>
-        /// <param name="tags">新的标签</param>
-        /// <param name="description">新的描述</param>
+        /// <param name="tags">照片标签</param>
+        /// <param name="description">照片描述</param>
         /// <returns>更新后的照片对象</returns>
-        Task<Photo> UpdatePhotoAsync(string photoId, IEnumerable<string> tags = null, string description = null);
+        Task<Photo> UpdatePhotoAsync(string photoId, IEnumerable<string> tags, string description = null);
         
         /// <summary>
         /// 删除照片
         /// </summary>
-        /// <param name="photoId">要删除的照片ID</param>
-        /// <returns>删除是否成功</returns>
+        /// <param name="photoId">照片ID</param>
+        /// <returns>是否删除成功</returns>
         Task<bool> DeletePhotoAsync(string photoId);
         
         /// <summary>
@@ -52,13 +52,32 @@ namespace SCPhotoTool.Services
         Task<IEnumerable<string>> GetAllTagsAsync();
         
         /// <summary>
-        /// 获取照片缩略图
+        /// 获取照片的缩略图
         /// </summary>
         /// <param name="photoId">照片ID</param>
         /// <returns>缩略图位图</returns>
         Task<Bitmap> GetThumbnailAsync(string photoId);
-
-        Task<IEnumerable<string>> GetPhotosAsync();
+        
+        /// <summary>
+        /// 保存照片的缩略图
+        /// </summary>
+        /// <param name="photoId">照片ID</param>
+        /// <param name="thumbnail">缩略图位图</param>
+        /// <returns>保存是否成功</returns>
+        Task<bool> SaveThumbnailAsync(string photoId, Bitmap thumbnail);
+        
+        /// <summary>
+        /// 获取照片路径
+        /// </summary>
+        /// <param name="photoId">照片ID</param>
+        /// <returns>照片文件路径</returns>
         Task<string> GetPhotoPathAsync(string photoId);
+        
+        /// <summary>
+        /// 检查照片是否已导入照片库
+        /// </summary>
+        /// <param name="photoPath">照片文件路径</param>
+        /// <returns>照片是否已存在于库中</returns>
+        Task<bool> IsPhotoImportedAsync(string photoPath);
     }
 } 

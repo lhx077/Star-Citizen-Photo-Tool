@@ -1,0 +1,118 @@
+<Window x:Class="SCPhotoTool.Views.AreaSelectWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SCPhotoTool.Views"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="选择截图区域" 
+        Height="600" 
+        Width="800"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        MouseDown="Window_MouseDown"
+        MouseMove="Window_MouseMove"
+        MouseUp="Window_MouseUp"
+        KeyDown="Window_KeyDown">
+    
+    <Window.Resources>
+        <!-- 选区标记点样式 -->
+        <Style x:Key="SelectionPointStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Fill" Value="#4C83FF"/>
+            <Setter Property="Stroke" Value="White"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+        </Style>
+    </Window.Resources>
+    
+    <Grid>
+        <!-- 背景图像 -->
+        <Image x:Name="BackgroundImage" Stretch="None" Opacity="0.8"/>
+        
+        <!-- 半透明遮罩 -->
+        <Rectangle x:Name="DarkOverlay" Fill="#80000000"/>
+        
+        <!-- 选择区域 -->
+        <Border x:Name="SelectionBorder" 
+                BorderThickness="2" 
+                BorderBrush="#4C83FF"
+                Background="Transparent"
+                Visibility="Collapsed">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="0" BlurRadius="8" Color="#4C83FF" Opacity="0.7"/>
+            </Border.Effect>
+        </Border>
+        
+        <!-- 选区标记点 -->
+        <Canvas x:Name="MarkersCanvas">
+            <Ellipse x:Name="TopLeftMarker" Style="{StaticResource SelectionPointStyle}" Visibility="Collapsed"/>
+            <Ellipse x:Name="TopRightMarker" Style="{StaticResource SelectionPointStyle}" Visibility="Collapsed"/>
+            <Ellipse x:Name="BottomLeftMarker" Style="{StaticResource SelectionPointStyle}" Visibility="Collapsed"/>
+            <Ellipse x:Name="BottomRightMarker" Style="{StaticResource SelectionPointStyle}" Visibility="Collapsed"/>
+        </Canvas>
+        
+        <!-- 信息面板 -->
+        <Border x:Name="InfoPanel" 
+                VerticalAlignment="Top" 
+                HorizontalAlignment="Center"
+                Background="#CC162133"
+                CornerRadius="8"
+                Padding="12,8"
+                Margin="0,16,0,0">
+            <StackPanel>
+                <TextBlock Text="拖动鼠标选择截图区域" 
+                           Foreground="White" 
+                           FontWeight="SemiBold" 
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="SelectionInfoText" 
+                           Text="尺寸: 0 x 0 | 位置: (0, 0)" 
+                           Foreground="#B0BEC5" 
+                           Margin="0,4,0,0"
+                           HorizontalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Center" 
+                            Margin="0,8,0,0">
+                    <Border Background="#283758" 
+                            CornerRadius="4" 
+                            Padding="8,4" 
+                            Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Check" 
+                                                     Width="12" 
+                                                     Height="12" 
+                                                     Foreground="#4C83FF" 
+                                                     VerticalAlignment="Center" 
+                                                     Margin="0,0,4,0"/>
+                            <TextBlock Text="Enter: 确认" 
+                                       Foreground="White" 
+                                       FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#283758" 
+                            CornerRadius="4" 
+                            Padding="8,4">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Close" 
+                                                     Width="12" 
+                                                     Height="12" 
+                                                     Foreground="#FF5252" 
+                                                     VerticalAlignment="Center" 
+                                                     Margin="0,0,4,0"/>
+                            <TextBlock Text="Esc: 取消" 
+                                       Foreground="White" 
+                                       FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window> 

@@ -572,5 +572,34 @@ namespace SCPhotoTool.Services
         }
         
         public bool IsEmpty => Width == 0 || Height == 0;
+        
+        // 添加从自定义Rectangle到System.Drawing.Rectangle的隐式转换
+        public static implicit operator System.Drawing.Rectangle(Rectangle rect)
+        {
+            return new System.Drawing.Rectangle(rect.X, rect.Y, rect.Width, rect.Height);
+        }
+        
+        // 添加从System.Drawing.Rectangle到自定义Rectangle的隐式转换
+        public static implicit operator Rectangle(System.Drawing.Rectangle rect)
+        {
+            return new Rectangle(rect.X, rect.Y, rect.Width, rect.Height);
+        }
+        
+        // 添加到RectangleF的隐式转换
+        public static implicit operator System.Drawing.RectangleF(Rectangle rect)
+        {
+            return new System.Drawing.RectangleF(rect.X, rect.Y, rect.Width, rect.Height);
+        }
+        
+        // 添加到PointF[]的隐式转换（用于图形绘制）
+        public static implicit operator System.Drawing.PointF[](Rectangle rect)
+        {
+            return new System.Drawing.PointF[] {
+                new System.Drawing.PointF(rect.X, rect.Y),
+                new System.Drawing.PointF(rect.X + rect.Width, rect.Y),
+                new System.Drawing.PointF(rect.X + rect.Width, rect.Y + rect.Height),
+                new System.Drawing.PointF(rect.X, rect.Y + rect.Height)
+            };
+        }
     }
 } 

@@ -82,21 +82,5 @@ namespace SCPhotoTool.Services
         (int X, int Y, int Width, int Height) GetGameClientCoords();
     }
     
-    public struct Rectangle
-    {
-        public int X;
-        public int Y;
-        public int Width;
-        public int Height;
-        
-        public Rectangle(int x, int y, int width, int height)
-        {
-            X = x;
-            Y = y;
-            Width = width;
-            Height = height;
-        }
-        
-        public bool IsEmpty => Width == 0 || Height == 0;
-    }
+  
 } 

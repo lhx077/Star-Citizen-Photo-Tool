@@ -8,6 +8,7 @@
         xmlns:views="clr-namespace:SCPhotoTool.Views"
         xmlns:viewmodels="clr-namespace:SCPhotoTool.ViewModels"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="星际公民摄影工具" Height="768" Width="1280" MinWidth="800" MinHeight="600"
         WindowStartupLocation="CenterScreen"
@@ -171,7 +172,7 @@
                                             <TextBlock Text="截图模式" 
                                                        Foreground="White" 
                                                        Margin="0,0,0,4"/>
-                                            <ComboBox ItemsSource="{Binding Source={x:Static local:CaptureMode.GameWindow}, Converter={StaticResource EnumToItemsSource}}"
+                                            <ComboBox ItemsSource="{Binding Source={x:Type local:CaptureMode}, Converter={StaticResource EnumToItemsSource}}"
                                                       SelectedItem="{Binding CaptureMode}">
                                                 <ComboBox.ItemTemplate>
                                                     <DataTemplate>
@@ -185,10 +186,10 @@
                                             <CheckBox Content="窗口模式时自动移除标题栏" 
                                                       IsChecked="{Binding AutoRemoveTitleBar}" 
                                                       Margin="0,0,0,8"
-                                                      Foreground="White"/>
+                                  Foreground="White"/>
                                                       
-                                            <CheckBox Content="自动保存" 
-                                                      IsChecked="{Binding AutoSave}" 
+                        <CheckBox Content="自动保存" 
+                                  IsChecked="{Binding AutoSave}" 
                                                       Margin="0,0,0,8"
                                                       Foreground="White"/>
                                                       
@@ -245,7 +246,7 @@
                                 <TextBlock Text="最近截图" 
                                            FontWeight="Medium" 
                                            Margin="0,0,0,8"
-                                           Foreground="White"/>
+                                  Foreground="White"/>
                                            
                                 <ListBox ItemsSource="{Binding RecentScreenshots}" 
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
@@ -287,7 +288,127 @@
             </DataTemplate>
             
             <DataTemplate DataType="{x:Type viewmodels:EditorViewModel}">
-                <TextBlock Text="编辑器视图尚未实现" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <views:PhotoEditorView/>
+            </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type viewmodels:AboutViewModel}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
+                    <StackPanel Margin="32,24">
+                        <!-- 项目标志和标题 -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
+                            <materialDesign:PackIcon Kind="StarCircleOutline" Height="64" Width="64" Foreground="#4C83FF" HorizontalAlignment="Center"/>
+                            <TextBlock Text="星际公民摄影工具" FontSize="28" FontWeight="Bold" Foreground="#4C83FF" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                            <TextBlock Text="Star Citizen Photography Tool" FontSize="18" Foreground="#B0BEC5" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding Version, StringFormat=版本 {0}}" FontSize="14" Foreground="#78909C" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <!-- 项目描述 -->
+                        <materialDesign:Card Background="#1E2842" UniformCornerRadius="12" Margin="0,0,0,24" Padding="24,16">
+                            <StackPanel>
+                                <TextBlock Text="项目简介" FontWeight="Bold" FontSize="16" Foreground="White" Margin="0,0,0,12"/>
+                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="14" Foreground="#CFD8DC" Margin="0,0,0,12"/>
+                                <TextBlock Text="{Binding Disclaimer}" TextWrapping="Wrap" FontSize="14" Foreground="#CFD8DC"/>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <!-- 主要功能介绍 -->
+                        <materialDesign:Card Background="#1E2842" UniformCornerRadius="12" Margin="0,0,0,24" Padding="24,16">
+                            <StackPanel>
+                                <TextBlock Text="主要功能" FontWeight="Bold" FontSize="16" Foreground="White" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,4,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
+                                        <materialDesign:PackIcon Kind="Camera" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="截图工具：支持全屏和游戏窗口截图，支持热键设置" TextWrapping="Wrap" Foreground="#CFD8DC"/>
+                                </Grid>
+
+                                <Grid Margin="0,4,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
+                                        <materialDesign:PackIcon Kind="ImageMultiple" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="照片库：管理游戏截图，支持标签分类和搜索功能" TextWrapping="Wrap" Foreground="#CFD8DC"/>
+                                </Grid>
+
+                                <Grid Margin="0,4,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
+                                        <materialDesign:PackIcon Kind="ImageEdit" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="照片编辑：基本的照片编辑功能，如亮度、对比度和饱和度调整" TextWrapping="Wrap" Foreground="#CFD8DC"/>
+                                </Grid>
+
+                                <Grid Margin="0,4,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
+                                        <materialDesign:PackIcon Kind="Cog" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="设置：自定义截图保存路径、格式和质量等" TextWrapping="Wrap" Foreground="#CFD8DC"/>
+                                </Grid>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <!-- 技术栈 -->
+                        <materialDesign:Card Background="#1E2842" UniformCornerRadius="12" Margin="0,0,0,24" Padding="24,16">
+                            <StackPanel>
+                                <TextBlock Text="技术栈" FontWeight="Bold" FontSize="16" Foreground="White" Margin="0,0,0,12"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
+                                    <TextBlock Text="C# / .NET 6.0" Foreground="#CFD8DC"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
+                                    <TextBlock Text="WPF (Windows Presentation Foundation)" Foreground="#CFD8DC"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Material Design in XAML" Foreground="#CFD8DC"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
+                                    <TextBlock Text="MVVM 架构模式" Foreground="#CFD8DC"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
+                                    <TextBlock Text="依赖注入模式" Foreground="#CFD8DC"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <!-- 版权信息 -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,12,0,0">
+                            <TextBlock Text="{Binding Copyright}" Foreground="#78909C" FontSize="12" HorizontalAlignment="Center"/>
+                            <TextBlock Text="本软件仅供学习和交流使用" Foreground="#78909C" FontSize="12" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            
+                            <Button Command="{Binding OpenProjectUrlCommand}" 
+                                    Style="{StaticResource MaterialDesignOutlinedButton}" 
+                                    HorizontalAlignment="Center"
+                                    Margin="0,16,0,0"
+                                    Background="#283758" 
+                                    Foreground="#4C83FF"
+                                    BorderBrush="#4C83FF">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Github" Width="18" Height="18" Margin="0,0,8,0"/>
+                                    <TextBlock Text="访问项目主页"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
             </DataTemplate>
         
         <Style x:Key="NavigationButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
@@ -338,6 +459,12 @@
                 <GradientStop Color="#101827" Offset="1"/>
             </LinearGradientBrush>
         </Grid.Background>
+        
+        <!-- 背景图片 -->
+        <Grid>
+            <Image Source="{StaticResource BackgroundImage}" Stretch="UniformToFill" Opacity="0.15"/>
+            <Rectangle Fill="#101827" Opacity="0.6"/>
+        </Grid>
         
         <Grid>
             <Grid.RowDefinitions>
@@ -441,7 +568,7 @@
                                 </StackPanel>
                             </Button>
 
-                            <Button Style="{StaticResource NavigationButton}" Command="{Binding ShowAboutWindowCommand}">
+                            <Button Style="{StaticResource NavigationButton}" Command="{Binding NavigateToAboutCommand}">
                                 <StackPanel Orientation="Horizontal">
                                     <Border Width="36" Height="36" CornerRadius="8" Background="#2D3E6C" VerticalAlignment="Center">
                                         <materialDesign:PackIcon Kind="Information" Width="20" Height="20" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>

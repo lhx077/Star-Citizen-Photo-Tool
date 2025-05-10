@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
 using Size = System.Drawing.Size;
 using DrawFont = System.Drawing.Font;
 using DrawFontStyle = System.Drawing.FontStyle;
@@ -14,7 +15,7 @@ using DrawBrush = System.Drawing.SolidBrush;
 
 namespace SCPhotoTool.Services
 {
-    public class ScreenshotService : IScreenshotService
+    public class ScreenshotService : IScreenshotService, IDisposable
     {
         private readonly ISettingsService _settingsService;
         private readonly IGameIntegrationService _gameIntegrationService;
@@ -24,6 +25,28 @@ namespace SCPhotoTool.Services
 
         [DllImport("user32.dll")]
         private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+
+        [DllImport("user32.dll")]
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+        // 热键修饰符常量
+        private const uint MOD_ALT = 0x0001;
+        private const uint MOD_CONTROL = 0x0002;
+        private const uint MOD_SHIFT = 0x0004;
+        private const uint MOD_WIN = 0x0008;
+        private const uint MOD_NOREPEAT = 0x4000;
+
+        // 热键ID
+        private const int HOTKEY_ID = 9000;
+
+        // 窗口句柄
+        private IntPtr _windowHandle;
+
+        // 消息钩子
+        private HwndSource _source;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT
@@ -41,7 +64,25 @@ namespace SCPhotoTool.Services
             
             // 初始化热键
             _currentHotkey = _settingsService.GetSetting<string>("ScreenshotHotkey", "PrintScreen");
+            
+            // 在应用程序加载完成后注册热键
+            if (Application.Current != null)
+            {
+                if (Application.Current.MainWindow != null)
+                {
+                    // 主窗口已加载，直接注册热键
+                    SetupHotkeys();
+                }
+                else
+                {
+                    // 等待主窗口加载完成
+                    Application.Current.Startup += (s, e) => {
+                        Application.Current.Dispatcher.InvokeAsync(() => {
             SetupHotkeys();
+                        }, System.Windows.Threading.DispatcherPriority.Loaded);
+                    };
+                }
+            }
         }
 
         public async Task<Bitmap> CaptureScreenAsync()
@@ -111,7 +152,7 @@ namespace SCPhotoTool.Services
                     {
                         try
                         {
-                            Bitmap screenshot = new Bitmap(width, height);
+                    Bitmap screenshot = new Bitmap(width, height);
                             
                             using (Graphics g = Graphics.FromImage(screenshot))
                             {
@@ -146,27 +187,43 @@ namespace SCPhotoTool.Services
             {
                 try
                 {
-                    // 在实际实现中，这里应该显示一个区域选择UI
-                    // 让用户可以拖动鼠标选择要截图的区域
+                    // 捕获整个屏幕作为背景
+                    Bitmap fullScreenBitmap = CaptureScreen();
                     
-                    // 模拟用户选择的区域（实际应用中这部分需要交互）
-                    int x = 100;
-                    int y = 100;
-                    int width = 800;
-                    int height = 600;
+                    // 使用UI线程创建并显示区域选择窗口
+                    AreaSelectedInfo selectedArea = null;
                     
-                    // 获取选中区域的截图
-                    Bitmap screenshot = new Bitmap(width, height);
+                    Application.Current.Dispatcher.Invoke(() => {
+                        var areaSelectWindow = new Views.AreaSelectWindow(fullScreenBitmap);
+                        if (areaSelectWindow.ShowDialog() == true)
+                        {
+                            selectedArea = areaSelectWindow.SelectedArea;
+                        }
+                    });
                     
-                    using (Graphics g = Graphics.FromImage(screenshot))
+                    // 如果用户取消了选择，返回null
+                    if (selectedArea == null)
                     {
-                        g.CopyFromScreen(x, y, 0, 0, new Size(width, height));
+                        return null;
                     }
                     
+                    // 获取选中区域的截图
+                    Bitmap screenshot = new Bitmap(selectedArea.Width, selectedArea.Height);
+
+                    using (Graphics g = Graphics.FromImage(screenshot))
+                    {
+                        g.CopyFromScreen(selectedArea.X, selectedArea.Y, 0, 0, 
+                            new Size(selectedArea.Width, selectedArea.Height));
+                    }
+                    
+                    // 释放全屏位图
+                    fullScreenBitmap.Dispose();
+
                     return screenshot;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"选区截图异常: {ex.Message}");
                     // 如果选区截图失败，返回全屏截图
                     return CaptureScreen();
                 }
@@ -273,9 +330,188 @@ namespace SCPhotoTool.Services
 
         private void SetupHotkeys()
         {
-            // 在实际应用中，这里需要实现全局热键注册
-            // 由于需要调用底层API进行热键注册，这部分代码较为复杂
-            // 实际实现可能需要使用P/Invoke注册系统热键或使用第三方库
+            // 如果应用程序未加载完成或已关闭，则跳过
+            if (Application.Current == null || Application.Current.MainWindow == null)
+                return;
+                
+            // 注销之前的热键
+            if (_windowHandle != IntPtr.Zero)
+            {
+                UnregisterHotKey(_windowHandle, HOTKEY_ID);
+            }
+            
+            if (_source != null)
+            {
+                _source.RemoveHook(HwndHook);
+            }
+            
+            try
+            {
+                // 获取主窗口句柄
+                _windowHandle = new WindowInteropHelper(Application.Current.MainWindow).Handle;
+                _source = HwndSource.FromHwnd(_windowHandle);
+                _source?.AddHook(HwndHook);
+                
+                // 解析热键字符串
+                uint modifiers = 0;
+                uint key = 0;
+                
+                // 解析热键
+                ParseHotkey(_currentHotkey, out modifiers, out key);
+                
+                // 注册热键
+                if (key != 0)
+                {
+                    // 添加MOD_NOREPEAT标志，避免热键被持续触发
+                    modifiers |= MOD_NOREPEAT;
+                    
+                    // 注册热键
+                    bool registered = RegisterHotKey(_windowHandle, HOTKEY_ID, modifiers, key);
+                    
+                    if (!registered)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"热键注册失败: {_currentHotkey}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"热键注册成功: {_currentHotkey}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"设置热键时出错: {ex.Message}");
+            }
+        }
+
+        private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const int WM_HOTKEY = 0x0312;
+            
+            // 检查是否是热键消息
+            if (msg == WM_HOTKEY && wParam.ToInt32() == HOTKEY_ID)
+            {
+                // 热键被触发
+                OnHotkeyPressed();
+                handled = true;
+            }
+            
+            return IntPtr.Zero;
+        }
+
+        private void ParseHotkey(string hotkeyString, out uint modifiers, out uint key)
+        {
+            modifiers = 0;
+            key = 0;
+            
+            if (string.IsNullOrEmpty(hotkeyString))
+                return;
+            
+            // 分割热键字符串，例如 "Ctrl+Shift+S"
+            string[] parts = hotkeyString.Split('+');
+            
+            foreach (string part in parts)
+            {
+                string trimmedPart = part.Trim();
+                
+                if (trimmedPart.Equals("Ctrl", StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiers |= MOD_CONTROL;
+                }
+                else if (trimmedPart.Equals("Alt", StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiers |= MOD_ALT;
+                }
+                else if (trimmedPart.Equals("Shift", StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiers |= MOD_SHIFT;
+                }
+                else if (trimmedPart.Equals("Win", StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiers |= MOD_WIN;
+                }
+                else
+                {
+                    // 解析键值
+                    key = ConvertKeyStringToVirtualKey(trimmedPart);
+                }
+            }
+            
+            // 处理单键热键，例如仅 "PrintScreen"
+            if (parts.Length == 1 && modifiers == 0)
+            {
+                key = ConvertKeyStringToVirtualKey(parts[0].Trim());
+            }
+        }
+
+        private uint ConvertKeyStringToVirtualKey(string keyString)
+        {
+            // 常用键的虚拟键码映射
+            if (keyString.Equals("PrintScreen", StringComparison.OrdinalIgnoreCase))
+                return 0x2C; // VK_SNAPSHOT
+            
+            if (keyString.Equals("F1", StringComparison.OrdinalIgnoreCase))
+                return 0x70; // VK_F1
+            
+            if (keyString.Equals("F2", StringComparison.OrdinalIgnoreCase))
+                return 0x71; // VK_F2
+            
+            if (keyString.Equals("F3", StringComparison.OrdinalIgnoreCase))
+                return 0x72; // VK_F3
+            
+            if (keyString.Equals("F4", StringComparison.OrdinalIgnoreCase))
+                return 0x73; // VK_F4
+            
+            if (keyString.Equals("F5", StringComparison.OrdinalIgnoreCase))
+                return 0x74; // VK_F5
+            
+            if (keyString.Equals("F6", StringComparison.OrdinalIgnoreCase))
+                return 0x75; // VK_F6
+            
+            if (keyString.Equals("F7", StringComparison.OrdinalIgnoreCase))
+                return 0x76; // VK_F7
+            
+            if (keyString.Equals("F8", StringComparison.OrdinalIgnoreCase))
+                return 0x77; // VK_F8
+            
+            if (keyString.Equals("F9", StringComparison.OrdinalIgnoreCase))
+                return 0x78; // VK_F9
+            
+            if (keyString.Equals("F10", StringComparison.OrdinalIgnoreCase))
+                return 0x79; // VK_F10
+            
+            if (keyString.Equals("F11", StringComparison.OrdinalIgnoreCase))
+                return 0x7A; // VK_F11
+            
+            if (keyString.Equals("F12", StringComparison.OrdinalIgnoreCase))
+                return 0x7B; // VK_F12
+            
+            if (keyString.Equals("Home", StringComparison.OrdinalIgnoreCase))
+                return 0x24; // VK_HOME
+            
+            if (keyString.Equals("End", StringComparison.OrdinalIgnoreCase))
+                return 0x23; // VK_END
+            
+            if (keyString.Equals("Insert", StringComparison.OrdinalIgnoreCase))
+                return 0x2D; // VK_INSERT
+            
+            if (keyString.Equals("Delete", StringComparison.OrdinalIgnoreCase))
+                return 0x2E; // VK_DELETE
+            
+            if (keyString.Equals("PageUp", StringComparison.OrdinalIgnoreCase))
+                return 0x21; // VK_PRIOR
+            
+            if (keyString.Equals("PageDown", StringComparison.OrdinalIgnoreCase))
+                return 0x22; // VK_NEXT
+            
+            if (keyString.Length == 1)
+            {
+                // 单个字符的按键 (A-Z, 0-9 等)
+                char character = keyString.ToUpper()[0];
+                return (uint)character;
+            }
+            
+            return 0; // 未知键
         }
 
         private Bitmap CaptureScreen()
@@ -306,10 +542,27 @@ namespace SCPhotoTool.Services
             return null;
         }
 
-        // 在实际应用中，需要添加热键触发的处理方法
+        // 热键触发处理方法
         private void OnHotkeyPressed()
         {
+            // 触发热键事件
             HotkeyTriggered?.Invoke(this, EventArgs.Empty);
+        }
+
+        // 清理资源
+        public void Dispose()
+        {
+            // 注销热键
+            if (_windowHandle != IntPtr.Zero)
+            {
+                UnregisterHotKey(_windowHandle, HOTKEY_ID);
+            }
+            
+            if (_source != null)
+            {
+                _source.RemoveHook(HwndHook);
+                _source = null;
+            }
         }
     }
 } 

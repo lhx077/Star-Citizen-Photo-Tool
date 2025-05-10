@@ -241,7 +241,7 @@ namespace SCPhotoTool.ViewModels
                 {
                     Title = Title,
                     Author = Author,
-                    Date = Date,
+                    DateTaken = DateTime.TryParse(Date, out var dateTaken) ? dateTaken : DateTime.Now,
                     Location = Location,
                     CameraSettings = CameraSettings,
                     Description = Description
@@ -309,7 +309,7 @@ namespace SCPhotoTool.ViewModels
                 // 更新设置中的水印状态
                 await _settingsService.SaveSettingAsync("AddProgramWatermark", ShowWatermark);
                 
-                string newPath = await _photoInfoService.AddCompositionGuideAsync(SelectedImagePath, SelectedComposition);
+                string newPath = await _photoInfoService.ShowCompositionGuideAsync(SelectedImagePath, SelectedComposition);
                 
                 if (!string.IsNullOrEmpty(newPath))
                 {
@@ -413,10 +413,10 @@ namespace SCPhotoTool.ViewModels
                 await _settingsService.SaveSettingAsync("AddProgramWatermark", ShowWatermark);
                 
                 // 创建Services.CropArea实例并传递属性值
-                var serviceCropArea = new SCPhotoTool.Services.CropArea(
+                var cropRect = new System.Drawing.Rectangle(
                     CropArea.X, CropArea.Y, CropArea.Width, CropArea.Height);
                 
-                string newPath = await _photoInfoService.CropImageAsync(SelectedImagePath, serviceCropArea);
+                string newPath = await _photoInfoService.CropImageAsync(SelectedImagePath, cropRect);
                 
                 if (!string.IsNullOrEmpty(newPath))
                 {
@@ -459,12 +459,12 @@ namespace SCPhotoTool.ViewModels
                 // 更新设置中的水印状态
                 await _settingsService.SaveSettingAsync("AddProgramWatermark", ShowWatermark);
                 
-                string newPath = await _photoInfoService.AddFilmGuideAsync(SelectedImagePath, SelectedFilmAspectRatio);
+                string newPath = await _photoInfoService.CropToAspectRatioAsync(SelectedImagePath, SelectedFilmAspectRatio);
                 
                 if (!string.IsNullOrEmpty(newPath))
                 {
                     RecentEdits.Insert(0, newPath);
-                    StatusMessage = $"已添加电影短片辅助线，保存为: {Path.GetFileName(newPath)}";
+                    StatusMessage = $"已按电影比例裁剪图像，保存为: {Path.GetFileName(newPath)}";
                 }
             }
             catch (Exception ex)

@@ -31,17 +31,18 @@ namespace SCPhotoTool
             services.AddSingleton<IPhotoInfoService, PhotoInfoService>();
             
             // 注册视图模型
-            services.AddTransient<MainViewModel>();
-            services.AddTransient<CaptureViewModel>();
-            services.AddTransient<SettingsViewModel>();
-            services.AddTransient<EditorViewModel>();
-            services.AddTransient<LibraryViewModel>();
-            services.AddTransient<PhotoEditorViewModel>();
+            services.AddSingleton<MainViewModel>();
+            services.AddSingleton<MainWindowViewModel>();
+            services.AddSingleton<CaptureViewModel>();
+            services.AddSingleton<LibraryViewModel>();
+            services.AddSingleton<EditorViewModel>();
+            services.AddSingleton<SettingsViewModel>();
+            services.AddSingleton<PhotoEditorViewModel>();
+            services.AddSingleton<AboutViewModel>();
             
             // 注册视图
             services.AddTransient<PhotoEditorView>();
             services.AddTransient<SettingsView>();
-            services.AddTransient<AboutWindow>();
             
             // 注册主窗口
             services.AddTransient<MainWindow>();

@@ -170,16 +170,20 @@ namespace SCPhotoTool.ViewModels
                 var photos = await _photoLibraryService.GetAllPhotosAsync();
                 
                 // 更新UI
+                Application.Current.Dispatcher.Invoke(() => {
+                    // 更新集合
+                    Photos.Clear();
+                    
+                    foreach (var photo in photos)
+                    {
+                        Photos.Add(photo);
+                    }
+                    
+                    FilterPhotos();
+                });
+                
+                // 异步加载缩略图
                 await LoadThumbnailsAsync(photos);
-                
-                // 更新集合
-                Photos.Clear();
-                foreach (var photo in photos)
-                {
-                    Photos.Add(photo);
-                }
-                
-                FilterPhotos();
                 
                 StatusMessage = $"已加载 {Photos.Count} 张照片";
             }
@@ -199,12 +203,54 @@ namespace SCPhotoTool.ViewModels
             {
                 try
                 {
+                    if (photo.ThumbnailImage != null)
+                        continue;
+                        
+                    // 检查文件是否存在
+                    if (!File.Exists(photo.FilePath))
+                    {
+                        continue;
+                    }
+                    
                     // 加载缩略图
                     var thumbnail = await _photoLibraryService.GetThumbnailAsync(photo.Id);
-                    photo.ThumbnailImage = BitmapToImageSource(thumbnail);
+                    
+                    // 如果无法从缓存获取缩略图，则从原始文件创建
+                    if (thumbnail == null)
+                    {
+                        try
+                        {
+                            // 从文件创建缩略图
+                            using (var originalImage = new Bitmap(photo.FilePath))
+                            {
+                                // 创建缩略图（宽度为200，高度按比例缩放）
+                                int width = 200;
+                                int height = (int)(originalImage.Height * (width / (float)originalImage.Width));
+                                
+                                thumbnail = new Bitmap(originalImage, width, height);
+                                
+                                // 保存缩略图到缓存
+                                await _photoLibraryService.SaveThumbnailAsync(photo.Id, thumbnail);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"创建缩略图失败: {ex.Message}");
+                            continue;
+                        }
+                    }
+                    
+                    // 转换为BitmapImage并更新UI
+                    var thumbnailImage = BitmapToImageSource(thumbnail);
+                    
+                    // 在UI线程更新照片的缩略图
+                    Application.Current.Dispatcher.Invoke(() => {
+                        photo.ThumbnailImage = thumbnailImage;
+                    });
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"加载缩略图失败: {ex.Message}");
                     // 如果缩略图加载失败，跳过
                     continue;
                 }

@@ -210,10 +210,17 @@ namespace SCPhotoTool.Services
         public async Task<string> GetPhotoPathAsync(string photoId)
         {
             var photo = _photos.FirstOrDefault(p => p.Id == photoId);
-            if (photo == null)
-                throw new KeyNotFoundException("找不到指定的照片");
-            
-            return photo.FilePath;
+            return await Task.FromResult(photo?.FilePath);
+        }
+        
+        /// <summary>
+        /// 检查照片是否已导入照片库
+        /// </summary>
+        /// <param name="photoPath">照片文件路径</param>
+        /// <returns>照片是否已存在于库中</returns>
+        public async Task<bool> IsPhotoImportedAsync(string photoPath)
+        {
+            return await Task.FromResult(_photos.Any(p => p.FilePath.Equals(photoPath, StringComparison.OrdinalIgnoreCase)));
         }
         
         private void LoadLibrary()
@@ -307,6 +314,44 @@ namespace SCPhotoTool.Services
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// 保存照片的缩略图
+        /// </summary>
+        /// <param name="photoId">照片ID</param>
+        /// <param name="thumbnail">缩略图位图</param>
+        /// <returns>保存是否成功</returns>
+        public async Task<bool> SaveThumbnailAsync(string photoId, Bitmap thumbnail)
+        {
+            if (thumbnail == null || string.IsNullOrEmpty(photoId))
+                return false;
+                
+            try
+            {
+                // 获取缩略图缓存目录
+                string cacheDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SCPhotoTool", "Cache", "Thumbnails");
+                    
+                // 确保目录存在
+                Directory.CreateDirectory(cacheDir);
+                
+                // 缩略图文件路径
+                string thumbnailPath = Path.Combine(cacheDir, $"{photoId}.png");
+                
+                // 保存缩略图
+                await Task.Run(() => {
+                    thumbnail.Save(thumbnailPath, System.Drawing.Imaging.ImageFormat.Png);
+                });
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"保存缩略图失败: {ex.Message}");
+                return false;
+            }
         }
     }
 } 

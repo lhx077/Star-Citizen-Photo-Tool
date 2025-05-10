@@ -13,6 +13,11 @@ namespace SCPhotoTool.ViewModels
         private readonly IGameIntegrationService _gameIntegrationService;
 
         private ViewModelBase _currentViewModel;
+        private readonly CaptureViewModel _captureViewModel;
+        private readonly LibraryViewModel _libraryViewModel;
+        private readonly EditorViewModel _editorViewModel;
+        private readonly SettingsViewModel _settingsViewModel;
+        private readonly AboutViewModel _aboutViewModel;
         private string _gameConnectionStatus = "未连接";
 
         public ViewModelBase CurrentViewModel
@@ -31,13 +36,8 @@ namespace SCPhotoTool.ViewModels
         public ICommand NavigateToLibraryCommand { get; }
         public ICommand NavigateToEditorCommand { get; }
         public ICommand NavigateToSettingsCommand { get; }
-        public ICommand ShowAboutWindowCommand { get; }
+        public ICommand NavigateToAboutCommand { get; }
         public ICommand ConnectToGameCommand { get; }
-
-        private readonly CaptureViewModel _captureViewModel;
-        private readonly LibraryViewModel _libraryViewModel;
-        private readonly PhotoEditorViewModel _editorViewModel;
-        private readonly SettingsViewModel _settingsViewModel;
 
         public MainViewModel(
             IScreenshotService screenshotService, 
@@ -46,8 +46,9 @@ namespace SCPhotoTool.ViewModels
             IGameIntegrationService gameIntegrationService,
             CaptureViewModel captureViewModel,
             LibraryViewModel libraryViewModel,
-            PhotoEditorViewModel editorViewModel,
-            SettingsViewModel settingsViewModel)
+            EditorViewModel editorViewModel,
+            SettingsViewModel settingsViewModel,
+            AboutViewModel aboutViewModel)
         {
             _screenshotService = screenshotService;
             _photoLibraryService = photoLibraryService;
@@ -58,6 +59,7 @@ namespace SCPhotoTool.ViewModels
             _libraryViewModel = libraryViewModel;
             _editorViewModel = editorViewModel;
             _settingsViewModel = settingsViewModel;
+            _aboutViewModel = aboutViewModel;
 
             // 默认显示截图工具视图
             CurrentViewModel = _captureViewModel;
@@ -67,7 +69,7 @@ namespace SCPhotoTool.ViewModels
             NavigateToLibraryCommand = new RelayCommand(_ => NavigateToLibrary());
             NavigateToEditorCommand = new RelayCommand(_ => NavigateToEditor());
             NavigateToSettingsCommand = new RelayCommand(_ => NavigateToSettings());
-            ShowAboutWindowCommand = new RelayCommand(_ => ShowAboutWindow());
+            NavigateToAboutCommand = new RelayCommand(_ => NavigateToAbout());
             ConnectToGameCommand = new RelayCommand(_ => ConnectToGame());
 
             // 初始化游戏连接状态
@@ -94,10 +96,16 @@ namespace SCPhotoTool.ViewModels
             CurrentViewModel = _settingsViewModel;
         }
 
+        private void NavigateToAbout()
+        {
+            CurrentViewModel = _aboutViewModel;
+        }
+
         private void ConnectToGame()
         {
-            _gameIntegrationService.Connect();
-            UpdateGameConnectionStatus();
+            // 这里实现游戏连接逻辑
+            // 暂时只更新状态
+            GameConnectionStatus = GameConnectionStatus == "已连接" ? "未连接" : "已连接";
         }
 
         private void UpdateGameConnectionStatus()
@@ -105,16 +113,6 @@ namespace SCPhotoTool.ViewModels
             GameConnectionStatus = _gameIntegrationService.IsConnected 
                 ? $"已连接 - {_gameIntegrationService.GameVersion}" 
                 : "未连接";
-        }
-
-        private void ShowAboutWindow()
-        {
-            var aboutWindow = App.Services.GetService(typeof(AboutWindow)) as AboutWindow;
-            if (aboutWindow != null)
-            {
-                aboutWindow.Owner = App.Current.MainWindow;
-                aboutWindow.ShowDialog();
-            }
         }
     }
 } 
