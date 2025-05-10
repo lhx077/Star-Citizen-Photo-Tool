@@ -104,11 +104,17 @@
                                 </Button>
                             </StackPanel>
                             
-                            <TextBlock Grid.Column="1" 
-                                       Text="{Binding StatusMessage}" 
+                            <StackPanel Grid.Column="1" 
                                        VerticalAlignment="Center" 
-                                       HorizontalAlignment="Center"
+                                       HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding StatusMessage}" 
                                        Foreground="White"/>
+                                <TextBlock Text="{Binding GameVersionInfo}" 
+                                       Foreground="#4C83FF"
+                                       Visibility="{Binding IsGameConnected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                       Margin="0,4,0,0"
+                                       FontSize="12"/>
+                            </StackPanel>
                             
                             <ProgressBar Grid.Column="2" 
                                          IsIndeterminate="True" 
@@ -140,14 +146,130 @@
                     </Border>
                     
                     <!-- 设置区域 -->
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,0" HorizontalAlignment="Right">
-                        <CheckBox Content="捕获游戏窗口" 
-                                  IsChecked="{Binding CaptureGameWindow}" 
-                                  Margin="0,0,16,0"
-                                  Foreground="White"/>
-                        <CheckBox Content="自动保存" 
-                                  IsChecked="{Binding AutoSave}" 
-                                  Foreground="White"/>
+                    <StackPanel Grid.Row="2" Margin="0,16,0,0">
+                        <materialDesign:Card Padding="16" UniformCornerRadius="8" Background="#1E2842">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="截图设置" 
+                                               FontWeight="Medium" 
+                                               Margin="0,0,0,8"
+                                               Foreground="White"/>
+                                    
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                            <TextBlock Text="截图模式" 
+                                                       Foreground="White" 
+                                                       Margin="0,0,0,4"/>
+                                            <ComboBox ItemsSource="{Binding Source={x:Static local:CaptureMode.GameWindow}, Converter={StaticResource EnumToItemsSource}}"
+                                                      SelectedItem="{Binding CaptureMode}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Converter={StaticResource EnumDescriptionConverter}}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        
+                                        <StackPanel Grid.Column="1" Margin="8,0,8,0">
+                                            <CheckBox Content="窗口模式时自动移除标题栏" 
+                                                      IsChecked="{Binding AutoRemoveTitleBar}" 
+                                                      Margin="0,0,0,8"
+                                                      Foreground="White"/>
+                                                      
+                                            <CheckBox Content="自动保存" 
+                                                      IsChecked="{Binding AutoSave}" 
+                                                      Margin="0,0,0,8"
+                                                      Foreground="White"/>
+                                                      
+                                            <CheckBox Content="添加游戏信息水印" 
+                                                      IsChecked="{Binding AddGameInfoWatermark}" 
+                                                      Foreground="White"/>
+                                        </StackPanel>
+                                        
+                                        <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                            <TextBlock Text="水印文本" 
+                                                       Foreground="White" 
+                                                       Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding WatermarkText}" 
+                                                     materialDesign:HintAssist.Hint="支持{version}作为版本占位符"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                                
+                                <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
+                                            Command="{Binding RefreshGameStatusCommand}"
+                                            Margin="0,0,0,8"
+                                            ToolTip="刷新游戏连接状态"
+                                            Background="#283758" 
+                                            Foreground="#4C83FF"
+                                            BorderBrush="#4C83FF"
+                                            materialDesign:ButtonAssist.CornerRadius="6">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Refresh" Width="18" Height="18" Margin="0,0,8,0"/>
+                                            <TextBlock Text="刷新游戏状态"/>
+                                        </StackPanel>
+                                    </Button>
+                                    
+                                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
+                                            Command="{Binding OpenGameCommand}"
+                                            ToolTip="连接游戏"
+                                            Background="#283758" 
+                                            Foreground="#4C83FF"
+                                            BorderBrush="#4C83FF"
+                                            materialDesign:ButtonAssist.CornerRadius="6">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Gamepad" Width="18" Height="18" Margin="0,0,8,0"/>
+                                            <TextBlock Text="连接游戏"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </materialDesign:Card>
+                        
+                        <!-- 最近截图 -->
+                        <materialDesign:Card Padding="16" UniformCornerRadius="8" Background="#1E2842" Margin="0,16,0,0"
+                                              Visibility="{Binding RecentScreenshots.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="最近截图" 
+                                           FontWeight="Medium" 
+                                           Margin="0,0,0,8"
+                                           Foreground="White"/>
+                                           
+                                <ListBox ItemsSource="{Binding RecentScreenshots}" 
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                                         Height="80">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    ToolTip="{Binding}"
+                                                    Padding="4">
+                                                <Image Source="{Binding Converter={StaticResource FilePathToImageConverter}}" 
+                                                       Width="60" Height="60" Stretch="Uniform"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </materialDesign:Card>
                     </StackPanel>
                 </Grid>
             </DataTemplate>

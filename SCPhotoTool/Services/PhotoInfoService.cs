@@ -721,7 +721,24 @@ namespace SCPhotoTool.Services
         HighContrast,
         Vintage,
         ColdBlue,
-        WarmOrange
+        WarmOrange,
+        SpaceNebula,
+        StarLight,
+        CosmicGlow,
+        EpicSpace,
+        CinematicSpace,
+        SciFiTech,
+        DeepShadows,
+        VibrantColors,
+        MattePainting,
+        AlienWorld,
+        SpaceExploration,  // 太空探索滤镜
+        PlanetSurface,     // 行星表面滤镜
+        HollywoodAction,   // 好莱坞动作片滤镜
+        FilmNoir,          // 黑色电影滤镜
+        SummerBlockbuster, // 夏季大片滤镜
+        Dystopian,         // 反乌托邦电影滤镜
+        WesternDesert      // 西部荒漠电影滤镜
     }
     
     /// <summary>

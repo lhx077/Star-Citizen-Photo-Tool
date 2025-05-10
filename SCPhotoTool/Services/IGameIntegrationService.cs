@@ -6,53 +6,97 @@ namespace SCPhotoTool.Services
     public interface IGameIntegrationService
     {
         /// <summary>
-        /// 游戏是否已连接
+        /// 指示是否已连接到游戏
         /// </summary>
         bool IsConnected { get; }
         
         /// <summary>
-        /// 游戏版本
+        /// 获取游戏版本信息
         /// </summary>
         string GameVersion { get; }
         
         /// <summary>
-        /// 连接到游戏
+        /// 指示游戏是否以窗口模式运行
         /// </summary>
-        /// <returns>是否连接成功</returns>
-        bool Connect();
+        bool IsWindowedMode { get; }
         
         /// <summary>
-        /// 断开游戏连接
+        /// 获取游戏窗口标题栏高度（如果是窗口模式）
+        /// </summary>
+        int TitleBarHeight { get; }
+
+        /// <summary>
+        /// 当游戏连接状态改变时触发
+        /// </summary>
+        event EventHandler<bool> GameConnectionStatusChanged;
+
+        /// <summary>
+        /// 尝试连接到游戏
+        /// </summary>
+        /// <returns>是否成功连接</returns>
+        bool Connect();
+
+        /// <summary>
+        /// 断开与游戏的连接
         /// </summary>
         void Disconnect();
-        
+
         /// <summary>
         /// 获取游戏窗口句柄
         /// </summary>
         /// <returns>窗口句柄</returns>
         IntPtr GetGameWindowHandle();
-        
+
         /// <summary>
         /// 获取游戏窗口标题
         /// </summary>
         /// <returns>窗口标题</returns>
         string GetGameWindowTitle();
-        
+
         /// <summary>
-        /// 获取游戏截图文件夹路径
+        /// 获取游戏截图目录
         /// </summary>
-        /// <returns>路径字符串</returns>
+        /// <returns>截图目录路径</returns>
         string GetGameScreenshotDirectory();
-        
+
         /// <summary>
-        /// 导入游戏自带截图
+        /// 导入游戏截图到照片库
         /// </summary>
-        /// <returns>导入的文件数量</returns>
+        /// <returns>导入的截图数量</returns>
         Task<int> ImportGameScreenshotsAsync();
         
         /// <summary>
-        /// 游戏状态变更事件
+        /// 获取游戏窗口的矩形区域（包括标题栏）
         /// </summary>
-        event EventHandler<bool> GameConnectionStatusChanged;
+        /// <returns>窗口矩形</returns>
+        Rectangle GetGameWindowRect();
+        
+        /// <summary>
+        /// 获取游戏客户区域的矩形（不包括标题栏）
+        /// </summary>
+        /// <returns>客户区矩形</returns>
+        Rectangle GetGameClientRect();
+
+        // 添加以下新方法，返回矩形的坐标和尺寸
+        (int X, int Y, int Width, int Height) GetGameWindowCoords();
+        (int X, int Y, int Width, int Height) GetGameClientCoords();
+    }
+    
+    public struct Rectangle
+    {
+        public int X;
+        public int Y;
+        public int Width;
+        public int Height;
+        
+        public Rectangle(int x, int y, int width, int height)
+        {
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
+        }
+        
+        public bool IsEmpty => Width == 0 || Height == 0;
     }
 } 

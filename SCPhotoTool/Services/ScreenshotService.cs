@@ -6,6 +6,11 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using Size = System.Drawing.Size;
+using DrawFont = System.Drawing.Font;
+using DrawFontStyle = System.Drawing.FontStyle;
+using DrawRectangle = System.Drawing.Rectangle;
+using DrawColor = System.Drawing.Color;
+using DrawBrush = System.Drawing.SolidBrush;
 
 namespace SCPhotoTool.Services
 {
@@ -61,30 +66,108 @@ namespace SCPhotoTool.Services
         {
             return await Task.Run(() =>
             {
-                IntPtr gameWindow = _gameIntegrationService.GetGameWindowHandle();
-                if (gameWindow == IntPtr.Zero)
+                // 获取游戏窗口
+                if (!_gameIntegrationService.IsConnected)
                 {
                     // 如果找不到游戏窗口，退回到全屏截图
                     return CaptureScreen();
                 }
 
-                if (GetWindowRect(gameWindow, out RECT rect))
+                // 检查窗口模式
+                if (_gameIntegrationService.IsWindowedMode)
                 {
-                    int width = rect.Right - rect.Left;
-                    int height = rect.Bottom - rect.Top;
-
-                    Bitmap screenshot = new Bitmap(width, height);
-
-                    using (Graphics g = Graphics.FromImage(screenshot))
+                    // 使用客户区域截图（去除标题栏）
+                    // 直接获取客户区坐标和尺寸，避免使用Rectangle结构体
+                    var (x, y, width, height) = _gameIntegrationService.GetGameClientCoords();
+                    
+                    if (width > 0 && height > 0)
                     {
-                        g.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(width, height));
+                        try
+                        {
+                            Bitmap screenshot = new Bitmap(width, height);
+                            
+                            using (Graphics g = Graphics.FromImage(screenshot))
+                            {
+                                g.CopyFromScreen(x, y, 0, 0, 
+                                    new Size(width, height));
+                            }
+                            
+                            return screenshot;
+                        }
+                        catch (Exception)
+                        {
+                            // 如果截图失败，回退到全屏截图
+                            return CaptureScreen();
+                        }
                     }
-
-                    return screenshot;
                 }
                 else
                 {
-                    // 如果无法获取窗口大小，退回到全屏截图
+                    // 全屏模式，获取整个窗口
+                    // 直接获取窗口坐标和尺寸，避免使用Rectangle结构体
+                    var (x, y, width, height) = _gameIntegrationService.GetGameWindowCoords();
+                    
+                    if (width > 0 && height > 0)
+                    {
+                        try
+                        {
+                            Bitmap screenshot = new Bitmap(width, height);
+                            
+                            using (Graphics g = Graphics.FromImage(screenshot))
+                            {
+                                // 使用高质量设置获取更清晰的截图
+                                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                                
+                                g.CopyFromScreen(x, y, 0, 0, 
+                                    new Size(width, height));
+                            }
+                            
+                            return screenshot;
+                        }
+                        catch (Exception)
+                        {
+                            // 如果截图失败，回退到全屏截图
+                            return CaptureScreen();
+                        }
+                    }
+                }
+
+                // 如果无法获取窗口大小，退回到全屏截图
+                return CaptureScreen();
+            });
+        }
+        
+        public async Task<Bitmap> CaptureSelectedAreaAsync()
+        {
+            // 创建一个截图选择工具
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    // 在实际实现中，这里应该显示一个区域选择UI
+                    // 让用户可以拖动鼠标选择要截图的区域
+                    
+                    // 模拟用户选择的区域（实际应用中这部分需要交互）
+                    int x = 100;
+                    int y = 100;
+                    int width = 800;
+                    int height = 600;
+                    
+                    // 获取选中区域的截图
+                    Bitmap screenshot = new Bitmap(width, height);
+                    
+                    using (Graphics g = Graphics.FromImage(screenshot))
+                    {
+                        g.CopyFromScreen(x, y, 0, 0, new Size(width, height));
+                    }
+                    
+                    return screenshot;
+                }
+                catch (Exception)
+                {
+                    // 如果选区截图失败，返回全屏截图
                     return CaptureScreen();
                 }
             });
@@ -128,6 +211,57 @@ namespace SCPhotoTool.Services
 
                 return filePath;
             });
+        }
+        
+        // 添加水印到图像
+        public Bitmap AddWatermark(Bitmap source, string watermarkText)
+        {
+            if (source == null)
+                return source;
+                
+            Bitmap result = new Bitmap(source.Width, source.Height);
+            
+            using (Graphics g = Graphics.FromImage(result))
+            {
+                // 绘制原图像
+                g.DrawImage(source, 0, 0, source.Width, source.Height);
+                
+                if (!string.IsNullOrEmpty(watermarkText))
+                {
+                    // 获取游戏版本信息
+                    string gameVersion = _gameIntegrationService.IsConnected 
+                        ? _gameIntegrationService.GameVersion 
+                        : "SC Alpha 4.1";
+                
+                    // 组合水印文本，如果用户已提供文本，附加版本信息
+                    string fullWatermarkText = watermarkText;
+                    if (!watermarkText.Contains(gameVersion))
+                    {
+                        fullWatermarkText += $" | {gameVersion}";
+                    }
+                    
+                    // 创建半透明文字
+                    using (DrawFont font = new DrawFont("Arial", 20, DrawFontStyle.Bold))
+                    using (DrawBrush textBrush = new DrawBrush(DrawColor.FromArgb(180, 255, 255, 255)))
+                    using (DrawBrush shadowBrush = new DrawBrush(DrawColor.FromArgb(120, 0, 0, 0)))
+                    using (StringFormat format = new StringFormat())
+                    {
+                        format.Alignment = StringAlignment.Far;
+                        format.LineAlignment = StringAlignment.Far;
+                        
+                        // 添加阴影效果
+                        System.Drawing.Rectangle textRect = new System.Drawing.Rectangle(0, 0, source.Width, source.Height);
+                        g.DrawString(fullWatermarkText, font, shadowBrush, 
+                            new System.Drawing.Rectangle(textRect.X + 2, textRect.Y + 2, textRect.Width, textRect.Height), 
+                            format);
+                        
+                        // 绘制主水印文本
+                        g.DrawString(fullWatermarkText, font, textBrush, textRect, format);
+                    }
+                }
+            }
+            
+            return result;
         }
 
         public void SetHotkey(string hotkey)
