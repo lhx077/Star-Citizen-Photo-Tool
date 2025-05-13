@@ -38,6 +38,7 @@ namespace SCPhotoTool.ViewModels
         public ICommand NavigateToSettingsCommand { get; }
         public ICommand NavigateToAboutCommand { get; }
         public ICommand ConnectToGameCommand { get; }
+        public ICommand NavigateCommand { get; }
 
         public MainViewModel(
             IScreenshotService screenshotService, 
@@ -71,9 +72,13 @@ namespace SCPhotoTool.ViewModels
             NavigateToSettingsCommand = new RelayCommand(_ => NavigateToSettings());
             NavigateToAboutCommand = new RelayCommand(_ => NavigateToAbout());
             ConnectToGameCommand = new RelayCommand(_ => ConnectToGame());
+            NavigateCommand = new RelayCommand(parameter => SwitchToView(parameter?.ToString()));
 
             // 初始化游戏连接状态
             UpdateGameConnectionStatus();
+            
+            // 订阅LibraryViewModel的导航事件
+            _libraryViewModel.NavigationRequested += OnNavigationRequested;
         }
 
         private void NavigateToScreenshot()
@@ -103,9 +108,17 @@ namespace SCPhotoTool.ViewModels
 
         private void ConnectToGame()
         {
-            // 这里实现游戏连接逻辑
-            // 暂时只更新状态
-            GameConnectionStatus = GameConnectionStatus == "已连接" ? "未连接" : "已连接";
+            if (_gameIntegrationService.Connect())
+            {
+                GameConnectionStatus = "已连接";
+            }
+            else
+            {
+                GameConnectionStatus = "未连接";
+            }
+            
+            // 更新状态信息
+            UpdateGameConnectionStatus();
         }
 
         private void UpdateGameConnectionStatus()
@@ -113,6 +126,38 @@ namespace SCPhotoTool.ViewModels
             GameConnectionStatus = _gameIntegrationService.IsConnected 
                 ? $"已连接 - {_gameIntegrationService.GameVersion}" 
                 : "未连接";
+        }
+
+        public void SwitchToView(string viewName)
+        {
+            switch (viewName?.ToLower())
+            {
+                case "capture":
+                    CurrentViewModel = _captureViewModel;
+                    break;
+                case "library":
+                    CurrentViewModel = _libraryViewModel;
+                    break;
+                case "editor":
+                    CurrentViewModel = _editorViewModel;
+                    break;
+                case "settings":
+                    CurrentViewModel = _settingsViewModel;
+                    break;
+                case "about":
+                    CurrentViewModel = _aboutViewModel;
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        private void OnNavigationRequested(object sender, NavigationEventArgs e)
+        {
+            if (e != null)
+            {
+                SwitchToView(e.ViewName);
+            }
         }
     }
 } 

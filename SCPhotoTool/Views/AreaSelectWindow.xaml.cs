@@ -2,6 +2,7 @@ using SCPhotoTool.Services;
 using System;
 using System.Drawing;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -14,8 +15,10 @@ namespace SCPhotoTool.Views
     public partial class AreaSelectWindow : Window
     {
         private bool _isSelecting = false;
-        private Point _startPoint;
-        private Point _currentPoint;
+        private System.Windows.Point _startPoint;
+        private System.Windows.Point _currentPoint;
+        private double _dpiScaleX = 1.0;
+        private double _dpiScaleY = 1.0;
         
         /// <summary>
         /// 用户选择的区域
@@ -34,11 +37,40 @@ namespace SCPhotoTool.Views
             Width = SystemParameters.PrimaryScreenWidth;
             Height = SystemParameters.PrimaryScreenHeight;
             
+            // 获取DPI缩放因子
+            GetDpiScale();
+            
             // 设置背景图像
             BackgroundImage.Source = ConvertBitmapToBitmapSource(screenBitmap);
             
             // 初始化选择区域
             SelectedArea = null;
+            
+            // 确保窗口覆盖整个屏幕
+            WindowState = WindowState.Maximized;
+        }
+        
+        /// <summary>
+        /// 获取DPI缩放因子
+        /// </summary>
+        private void GetDpiScale()
+        {
+            try
+            {
+                PresentationSource source = PresentationSource.FromVisual(this);
+                if (source != null && source.CompositionTarget != null)
+                {
+                    _dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
+                    _dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
+                    System.Diagnostics.Debug.WriteLine($"DPI缩放: X={_dpiScaleX}, Y={_dpiScaleY}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"获取DPI缩放失败: {ex.Message}");
+                _dpiScaleX = 1.0;
+                _dpiScaleY = 1.0;
+            }
         }
         
         /// <summary>
@@ -105,12 +137,12 @@ namespace SCPhotoTool.Views
                         return;
                     }
                     
-                    // 保存选择区域
+                    // 保存选择区域，应用DPI缩放
                     SelectedArea = new AreaSelectedInfo(
-                        (int)left, 
-                        (int)top, 
-                        (int)width, 
-                        (int)height);
+                        (int)Math.Round(left),
+                        (int)Math.Round(top),
+                        (int)Math.Round(width),
+                        (int)Math.Round(height));
                     
                     DialogResult = true;
                     Close();

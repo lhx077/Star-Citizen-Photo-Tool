@@ -13,4 +13,5 @@
     <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
     <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
     <converters:FilePathToImageConverter x:Key="FilePathToImageConverter"/>
+    <converters:BoolToConnectionBrushConverter x:Key="BoolToConnectionBrushConverter"/>
 </ResourceDictionary> 

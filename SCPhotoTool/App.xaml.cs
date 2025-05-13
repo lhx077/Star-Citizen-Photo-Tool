@@ -9,7 +9,9 @@ namespace SCPhotoTool
 {
     public partial class App : Application
     {
-        private ServiceProvider serviceProvider;
+        private ServiceProvider _serviceProvider;
+        
+        public ServiceProvider ServiceProvider => _serviceProvider;
         
         public static ServiceProvider Services { get; private set; }
 
@@ -17,8 +19,8 @@ namespace SCPhotoTool
         {
             ServiceCollection services = new ServiceCollection();
             ConfigureServices(services);
-            serviceProvider = services.BuildServiceProvider();
-            Services = serviceProvider;
+            _serviceProvider = services.BuildServiceProvider();
+            Services = _serviceProvider;
         }
 
         private void ConfigureServices(ServiceCollection services)
@@ -52,8 +54,46 @@ namespace SCPhotoTool
         {
             base.OnStartup(e);
             
-            var mainWindow = serviceProvider.GetService<MainWindow>();
-            mainWindow.DataContext = serviceProvider.GetService<MainViewModel>();
+            try
+            {
+                // 加载资源字典
+                LoadResourceDictionaries();
+                
+                // 创建并显示主窗口
+                CreateAndShowMainWindow();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"应用程序启动错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown(1);
+            }
+        }
+        
+        private void LoadResourceDictionaries()
+        {
+            // 确保资源被正确加载
+            var resourceDictionary = new ResourceDictionary
+            {
+                Source = new Uri("/SCPhotoTool;component/Resources/Converters.xaml", UriKind.Relative)
+            };
+            
+            if (!Application.Current.Resources.MergedDictionaries.Contains(resourceDictionary))
+            {
+                Application.Current.Resources.MergedDictionaries.Add(resourceDictionary);
+            }
+        }
+        
+        private void CreateAndShowMainWindow()
+        {
+            // 确保主窗口在创建前所有服务都已正确初始化
+            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+            var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
+            
+            // 显式设置DataContext
+            mainWindow.DataContext = mainViewModel;
+            
+            // 设置为应用程序主窗口并显示
+            Current.MainWindow = mainWindow;
             mainWindow.Show();
         }
     }

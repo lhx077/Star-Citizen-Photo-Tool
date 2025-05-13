@@ -65,9 +65,9 @@ namespace SCPhotoTool.Services
         /// 裁剪照片
         /// </summary>
         /// <param name="imagePath">照片路径</param>
-        /// <param name="rect">裁剪区域</param>
+        /// <param name="cropArea">裁剪区域</param>
         /// <returns>保存后的照片路径</returns>
-        Task<string> CropImageAsync(string imagePath, Rectangle rect);
+        Task<string> CropImageAsync(string imagePath, CropArea cropArea);
         
         /// <summary>
         /// 按指定宽高比裁剪照片
@@ -109,6 +109,22 @@ namespace SCPhotoTool.Services
         /// <param name="compositionType">构图类型</param>
         /// <returns>保存后的照片路径</returns>
         Task<string> ShowCompositionGuideAsync(string imagePath, CompositionType compositionType);
+        
+        /// <summary>
+        /// 添加构图辅助线
+        /// </summary>
+        /// <param name="imagePath">照片路径</param>
+        /// <param name="compositionType">构图类型</param>
+        /// <returns>保存后的照片路径</returns>
+        Task<string> AddCompositionGuideAsync(string imagePath, CompositionType compositionType);
+        
+        /// <summary>
+        /// 添加电影拍摄辅助线
+        /// </summary>
+        /// <param name="imagePath">照片路径</param>
+        /// <param name="aspectRatio">宽高比类型</param>
+        /// <returns>保存后的照片路径</returns>
+        Task<string> AddFilmGuideAsync(string imagePath, FilmAspectRatio aspectRatio);
     }
     
     

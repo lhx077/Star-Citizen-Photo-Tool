@@ -1,0 +1,264 @@
+<Window x:Class="SCPhotoTool.Views.PhotoViewerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SCPhotoTool.Views"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Height="600" 
+        Width="800"
+        WindowStartupLocation="CenterOwner"
+        TextElement.Foreground="White"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        KeyDown="Window_KeyDown"
+        MouseWheel="Window_MouseWheel"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        BorderThickness="1"
+        BorderBrush="#324372">
+        
+    <!-- 星际风格渐变背景 -->
+    <Window.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#070C17" Offset="0"/>
+            <GradientStop Color="#0C1424" Offset="0.5"/>
+            <GradientStop Color="#071020" Offset="1"/>
+        </LinearGradientBrush>
+    </Window.Background>
+    
+    <!-- 添加星星粒子效果 -->
+    <Window.Resources>
+        <Style x:Key="StarParticle" TargetType="Ellipse">
+            <Setter Property="Width" Value="2"/>
+            <Setter Property="Height" Value="2"/>
+            <Setter Property="Fill" Value="White"/>
+            <Setter Property="Opacity" Value="0.6"/>
+        </Style>
+    </Window.Resources>
+        
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 星星背景层 (装饰性) -->
+        <Canvas Grid.RowSpan="3" Panel.ZIndex="-1">
+            <!-- 随机分布的星星 -->
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="50" Canvas.Top="30"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="120" Canvas.Top="80"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="200" Canvas.Top="40"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="350" Canvas.Top="120"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="480" Canvas.Top="70"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="550" Canvas.Top="30"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="620" Canvas.Top="90"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="700" Canvas.Top="120"/>
+            <Ellipse Style="{StaticResource StarParticle}" Canvas.Left="750" Canvas.Top="50"/>
+            <!-- 较大的星星 -->
+            <Ellipse Width="3" Height="3" Fill="White" Opacity="0.8" Canvas.Left="250" Canvas.Top="150"/>
+            <Ellipse Width="3" Height="3" Fill="White" Opacity="0.8" Canvas.Left="500" Canvas.Top="200"/>
+            <Ellipse Width="3" Height="3" Fill="White" Opacity="0.8" Canvas.Left="650" Canvas.Top="180"/>
+        </Canvas>
+        
+        <!-- 顶部工具栏 (做为自定义标题栏) -->
+        <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#14203A" Offset="0"/>
+                    <GradientStop Color="#0F1A30" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Grid.Effect>
+                <DropShadowEffect ShadowDepth="2" Direction="270" Color="#000A14" Opacity="0.6" BlurRadius="10"/>
+            </Grid.Effect>
+            
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,12">
+                <materialDesign:PackIcon Kind="Image" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="#4C83FF"/>
+                <TextBlock Text="星际公民 - 照片查看器" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           VerticalAlignment="Center">
+                    <TextBlock.Foreground>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#4C83FF" Offset="0"/>
+                            <GradientStop Color="#6A9CFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </TextBlock.Foreground>
+                </TextBlock>
+            </StackPanel>
+            
+            <Border Grid.Column="1" 
+                    Background="#182333" 
+                    CornerRadius="4" 
+                    Margin="16,6" 
+                    Padding="8,4"
+                    BorderBrush="#2D4266"
+                    BorderThickness="1">
+                <TextBlock Text="{Binding ImagePath, StringFormat={}文件: {0}}" 
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="#B0C4E4"/>
+            </Border>
+            
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                        Click="MinimizeButton_Click"
+                        ToolTip="最小化"
+                        Foreground="#7DA3D8">
+                    <materialDesign:PackIcon Kind="WindowMinimize" Width="20" Height="20"/>
+                </Button>
+                
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                        Click="MaximizeButton_Click"
+                        ToolTip="最大化"
+                        Foreground="#7DA3D8">
+                    <materialDesign:PackIcon Kind="WindowMaximize" Width="20" Height="20"/>
+                </Button>
+                
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                        Click="CloseButton_Click"
+                        Margin="0,0,8,0"
+                        ToolTip="关闭"
+                        Foreground="#7DA3D8">
+                    <materialDesign:PackIcon Kind="Close" Width="20" Height="20"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+        
+        <!-- 图像显示区 -->
+        <Border Grid.Row="1" 
+                Margin="8"
+                BorderThickness="1"
+                BorderBrush="#1A2942"
+                CornerRadius="4">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#060A13" Offset="0"/>
+                    <GradientStop Color="#080E1A" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="1" Direction="270" Color="#000A14" Opacity="0.5" BlurRadius="5"/>
+            </Border.Effect>
+            
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                          VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Image x:Name="MainImage" 
+                           Stretch="None" 
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           RenderTransformOrigin="0.5,0.5">
+                        <Image.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="ImageScale" ScaleX="1" ScaleY="1"/>
+                                <RotateTransform x:Name="ImageRotation" Angle="0"/>
+                            </TransformGroup>
+                        </Image.RenderTransform>
+                        <Image.Effect>
+                            <DropShadowEffect ShadowDepth="0" Color="#4C83FF" Opacity="0.2" BlurRadius="20"/>
+                        </Image.Effect>
+                    </Image>
+                    
+                    <TextBlock x:Name="NoImageText" 
+                               Text="无法加载图像" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center"
+                               FontSize="18"
+                               Foreground="#4C83FF"
+                               Visibility="Collapsed"/>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+        
+        <!-- 底部控制栏 -->
+        <Border Grid.Row="2" Padding="16,8" Margin="8,0,8,8" CornerRadius="4" BorderThickness="1" BorderBrush="#1A2942">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#14203A" Offset="0"/>
+                    <GradientStop Color="#0F1A30" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="2" Direction="270" Color="#000A14" Opacity="0.6" BlurRadius="10"/>
+            </Border.Effect>
+            
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- 缩放控制 -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Button Style="{StaticResource MaterialDesignIconFlatButton}" 
+                            Click="ZoomOutButton_Click"
+                            ToolTip="缩小"
+                            Foreground="#4C83FF">
+                        <materialDesign:PackIcon Kind="ZoomOut" Width="24" Height="24"/>
+                    </Button>
+                    
+                    <ComboBox Width="100" 
+                              x:Name="ZoomComboBox"
+                              SelectedIndex="2"
+                              SelectionChanged="ZoomComboBox_SelectionChanged"
+                              Margin="8,0"
+                              BorderBrush="#2D4266"
+                              Background="#182333"
+                              Foreground="#B0C4E4">
+                        <ComboBoxItem Content="25%"/>
+                        <ComboBoxItem Content="50%"/>
+                        <ComboBoxItem Content="100%"/>
+                        <ComboBoxItem Content="150%"/>
+                        <ComboBoxItem Content="200%"/>
+                        <ComboBoxItem Content="适应窗口"/>
+                    </ComboBox>
+                    
+                    <Button Style="{StaticResource MaterialDesignIconFlatButton}" 
+                            Click="ZoomInButton_Click"
+                            ToolTip="放大"
+                            Foreground="#4C83FF">
+                        <materialDesign:PackIcon Kind="ZoomIn" Width="24" Height="24"/>
+                    </Button>
+                </StackPanel>
+                
+                <!-- 图像信息 -->
+                <Border Grid.Column="1" 
+                        Background="#182333" 
+                        CornerRadius="4" 
+                        Padding="8,4"
+                        BorderBrush="#2D4266"
+                        BorderThickness="1"
+                        HorizontalAlignment="Center">
+                    <TextBlock x:Name="ImageInfoText"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               Text="1920 x 1080"
+                               Foreground="#B0C4E4"/>
+                </Border>
+                
+                <!-- 旋转控制 -->
+                <Button Grid.Column="2" 
+                        Style="{StaticResource MaterialDesignIconFlatButton}" 
+                        Click="RotateButton_Click"
+                        ToolTip="旋转90度"
+                        Foreground="#4C83FF">
+                    <materialDesign:PackIcon Kind="RotateRight" Width="24" Height="24"/>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window> 

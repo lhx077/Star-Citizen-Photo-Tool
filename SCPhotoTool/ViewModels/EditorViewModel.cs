@@ -29,6 +29,7 @@ namespace SCPhotoTool.ViewModels
         private bool _hasUnsavedChanges;
         private Bitmap _originalBitmap;
         private Bitmap _editedBitmap;
+        private Stack<Bitmap> _editHistory = new Stack<Bitmap>();
         private string _selectedImagePath;
         private bool _showWatermark = true;
         private bool _isCropping;
@@ -43,6 +44,8 @@ namespace SCPhotoTool.ViewModels
         private string _location;
         private string _cameraSettings;
         private string _description;
+
+        public bool CanUndo => _editHistory.Count > 0;
 
         public BitmapImage CurrentImage
         {
@@ -200,6 +203,7 @@ namespace SCPhotoTool.ViewModels
         public ICommand ExportPhotoCommand { get; }
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
+        public ICommand SaveImageAsCommand { get; }
         public ICommand StartCropCommand { get; }
         public ICommand ApplyCropCommand { get; }
         public ICommand CancelCropCommand { get; }
@@ -208,6 +212,7 @@ namespace SCPhotoTool.ViewModels
         public ICommand AddCompositionGuideCommand { get; }
         public ICommand AddFilmGuideCommand { get; }
         public ICommand OpenEditedImageCommand { get; }
+        public ICommand UndoCommand { get; }
 
         public EditorViewModel(IPhotoLibraryService photoLibraryService, IPhotoInfoService photoInfoService, ISettingsService settingsService)
         {
@@ -282,14 +287,22 @@ namespace SCPhotoTool.ViewModels
             ExportPhotoCommand = new RelayCommand(_ => ExportPhoto(), _ => HasLoadedPhoto);
             OpenImageCommand = new RelayCommand(_ => OpenImageDialog());
             SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => CanEditImage());
+            SaveImageAsCommand = new RelayCommand(_ => SaveImageAs(), _ => CanEditImage());
             StartCropCommand = new RelayCommand(_ => StartCrop(), _ => CanEditImage());
             ApplyCropCommand = new RelayCommand(_ => ApplyCrop(), _ => IsCropping);
             CancelCropCommand = new RelayCommand(_ => CancelCrop(), _ => IsCropping);
             AddInfoCommand = new RelayCommand(_ => AddInfoAsync(), _ => CanEditImage());
-            ApplyFilterCommand = new RelayCommand(_ => ApplyFilterAsync(), _ => CanEditImage());
+            ApplyFilterCommand = new RelayCommand(_ => ApplySelectedFilter(), _ => CanEditImage());
             AddCompositionGuideCommand = new RelayCommand(_ => AddCompositionGuideAsync(), _ => CanEditImage());
             AddFilmGuideCommand = new RelayCommand(_ => AddFilmGuideAsync(), _ => CanEditImage());
             OpenEditedImageCommand = new RelayCommand(p => OpenEditedImage(p as string));
+            UndoCommand = new RelayCommand(_ => UndoLastEdit(), _ => CanUndo);
+
+            // 读取默认作者信息
+            Author = _settingsService.GetSetting<string>("DefaultAuthor", "");
+            
+            // 设置当前日期
+            Date = DateTime.Now.ToString("yyyy-MM-dd");
         }
 
         public async Task LoadPhotoAsync(string photoId)
@@ -417,10 +430,10 @@ namespace SCPhotoTool.ViewModels
 
             try
             {
-                // 应用图像效果处理
-                // 注意：实际应用中，这里应该实现较为复杂的图像处理算法
-                // 这里为了简单演示，仅采用简单方法
-
+                // 先保存当前状态到历史记录
+                SaveToHistory();
+                
+                // 以下是原有的图像处理代码
                 // 重新创建编辑中的位图
                 _editedBitmap?.Dispose();
                 _editedBitmap = new Bitmap(_originalBitmap);
@@ -539,35 +552,87 @@ namespace SCPhotoTool.ViewModels
         {
             if (string.IsNullOrEmpty(imagePath) || !File.Exists(imagePath))
             {
-                StatusMessage = "无效的图像路径";
+                StatusMessage = "无法打开图像：文件不存在";
                 return;
             }
-            
+
             try
             {
-                var image = new BitmapImage();
-                image.BeginInit();
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.UriSource = new Uri(imagePath);
-                image.EndInit();
-                image.Freeze(); // 使图像可以跨线程访问
+                // 保存图片路径
+                _selectedImagePath = imagePath;
                 
-                // 更新当前图像和路径
-                CurrentImage = image;
-                SelectedImagePath = imagePath;
+                // 加载照片信息
+                var photoInfoTask = _photoInfoService.GetPhotoInfoAsync(imagePath);
+                photoInfoTask.Wait(); // 注意：实际应用中应该使用异步方法，这里简化处理
+                var photoInfo = photoInfoTask.Result;
                 
-                // 重置裁剪状态
-                IsCropping = false;
+                if (photoInfo != null)
+                {
+                    _currentPhoto = new Photo
+                    {
+                        Id = Path.GetFileNameWithoutExtension(imagePath),
+                        FilePath = imagePath,
+                        Title = photoInfo.Title,
+                        Description = photoInfo.Description,
+                        Author = photoInfo.Author,
+                        DateTaken = photoInfo.DateTaken,
+                        CameraSettings = photoInfo.CameraSettings
+                    };
+                }
+                else
+                {
+                    // 如果没有照片信息，则创建新的照片对象
+                    _currentPhoto = new Photo
+                    {
+                        Id = Path.GetFileNameWithoutExtension(imagePath),
+                        FilePath = imagePath,
+                        Title = Path.GetFileNameWithoutExtension(imagePath),
+                        DateTaken = File.GetCreationTime(imagePath)
+                    };
+                }
                 
-                // 更新状态
+                // 加载图片
+                using (var originalBitmap = new Bitmap(imagePath))
+                {
+                    // 创建副本以便编辑
+                    _originalBitmap = new Bitmap(originalBitmap);
+                    _editedBitmap = new Bitmap(originalBitmap);
+                }
+                
+                // 转换为可显示的图像
+                CurrentImage = BitmapToImageSource(_editedBitmap);
+                
+                // 更新UI显示的信息
+                Title = _currentPhoto.Title;
+                Author = _currentPhoto.Author;
+                Description = _currentPhoto.Description;
+                Location = _currentPhoto.Location;
+                
+                if (_currentPhoto.DateTaken.HasValue)
+                {
+                    Date = _currentPhoto.DateTaken.Value.ToString("yyyy-MM-dd HH:mm:ss");
+                }
+                else
+                {
+                    Date = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                }
+                
+                // 相机设置
+                CameraSettings = _currentPhoto.CameraSettings ?? "未知相机设置";
+                
+                // 重置编辑历史
+                _editHistory.Clear();
+                OnPropertyChanged(nameof(CanUndo));
+                
+                // 重置编辑状态
+                HasUnsavedChanges = false;
+                
+                // 更新状态消息
                 StatusMessage = $"已加载图像: {Path.GetFileName(imagePath)}";
-                
-                // 尝试提取照片信息
-                ExtractPhotoInfo(imagePath);
             }
             catch (Exception ex)
             {
-                StatusMessage = $"加载图像失败: {ex.Message}";
+                StatusMessage = $"加载图像时出错: {ex.Message}";
             }
         }
 
@@ -596,7 +661,78 @@ namespace SCPhotoTool.ViewModels
 
         private void SaveImage()
         {
-            // 实现保存图像的功能
+            if (_editedBitmap == null)
+                return;
+                
+            try
+            {
+                // 检查是否有已打开的文件路径
+                if (!string.IsNullOrEmpty(SelectedImagePath) && File.Exists(SelectedImagePath))
+                {
+                    // 保存到当前文件
+                    _editedBitmap.Save(SelectedImagePath);
+                    StatusMessage = $"已保存到: {Path.GetFileName(SelectedImagePath)}";
+                    HasUnsavedChanges = false;
+                }
+                else
+                {
+                    // 如果没有当前文件，则执行另存为
+                    SaveImageAs();
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"保存失败: {ex.Message}";
+                Views.MessageWindow.ShowMessage($"保存失败: {ex.Message}", "错误", Views.MessageWindow.MessageType.Error);
+            }
+        }
+        
+        private void SaveImageAs()
+        {
+            if (_editedBitmap == null)
+                return;
+                
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "另存为",
+                Filter = "JPG图像|*.jpg|PNG图像|*.png|BMP图像|*.bmp",
+                DefaultExt = ".jpg"
+            };
+            
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    string extension = Path.GetExtension(saveFileDialog.FileName).ToLower();
+                    ImageFormat format = ImageFormat.Jpeg;
+                    
+                    switch (extension)
+                    {
+                        case ".jpg":
+                        case ".jpeg":
+                            format = ImageFormat.Jpeg;
+                            break;
+                        case ".png":
+                            format = ImageFormat.Png;
+                            break;
+                        case ".bmp":
+                            format = ImageFormat.Bmp;
+                            break;
+                    }
+                    
+                    _editedBitmap.Save(saveFileDialog.FileName, format);
+                    
+                    // 更新当前路径
+                    SelectedImagePath = saveFileDialog.FileName;
+                    HasUnsavedChanges = false;
+                    StatusMessage = $"已保存到: {Path.GetFileName(saveFileDialog.FileName)}";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"保存失败: {ex.Message}";
+                    Views.MessageWindow.ShowMessage($"保存失败: {ex.Message}", "错误", Views.MessageWindow.MessageType.Error);
+                }
+            }
         }
 
         private void StartCrop()
@@ -621,6 +757,9 @@ namespace SCPhotoTool.ViewModels
             {
                 IsBusy = true;
                 StatusMessage = "正在裁剪图像...";
+                
+                // 保存当前状态到历史记录
+                SaveToHistory();
                 
                 var cropArea = new SCPhotoTool.Services.CropArea(
                     CropArea.X, CropArea.Y, CropArea.Width, CropArea.Height);
@@ -669,7 +808,7 @@ namespace SCPhotoTool.ViewModels
                 {
                     Title = Title,
                     Author = Author,
-                    Date = Date,
+                    DateTaken = DateTime.TryParse(Date, out var date) ? date : DateTime.Now,
                     Location = Location,
                     CameraSettings = CameraSettings,
                     Description = Description
@@ -693,31 +832,34 @@ namespace SCPhotoTool.ViewModels
             }
         }
 
-        private async void ApplyFilterAsync()
+        private async void ApplySelectedFilter()
         {
-            if (string.IsNullOrEmpty(SelectedImagePath))
+            if (_editedBitmap == null || _selectedFilter == FilterType.None)
                 return;
-                
+
+            IsBusy = true;
+            StatusMessage = "正在应用滤镜...";
+
             try
             {
-                IsBusy = true;
-                StatusMessage = "正在应用滤镜...";
+                SaveToHistory();
                 
-                // 更新设置中的水印状态
-                await _settingsService.SaveSettingAsync("AddProgramWatermark", ShowWatermark);
+                // 创建新的Bitmap以避免修改原图
+                Bitmap processedBitmap = new Bitmap(_editedBitmap);
                 
-                string newPath = await _photoInfoService.ApplyFilterAsync(SelectedImagePath, SelectedFilter);
+                // 应用选中的滤镜
+                ApplyFilter(processedBitmap, _selectedFilter);
                 
-                if (!string.IsNullOrEmpty(newPath))
-                {
-                    OpenImage(newPath);
-                    RecentEdits.Insert(0, newPath);
-                    StatusMessage = $"已应用滤镜，保存为: {Path.GetFileName(newPath)}";
-                }
+                // 更新编辑后的位图和显示的图像
+                _editedBitmap = processedBitmap;
+                CurrentImage = BitmapToImageSource(_editedBitmap);
+                
+                HasUnsavedChanges = true;
+                StatusMessage = $"已应用{_selectedFilter}滤镜";
             }
             catch (Exception ex)
             {
-                StatusMessage = $"应用滤镜失败: {ex.Message}";
+                StatusMessage = $"应用滤镜时出错: {ex.Message}";
             }
             finally
             {
@@ -1337,37 +1479,70 @@ namespace SCPhotoTool.ViewModels
             bitmap.UnlockBits(bmpData);
         }
 
-        // 将滤镜应用到当前打开的图像
-        public void ApplyFilterToCurrentImage(FilterType filterType)
+        // 清理所有历史记录
+        public void ClearHistory()
+        {
+            // 清理历史记录栈中的所有位图对象
+            while (_editHistory.Count > 0)
+            {
+                var bitmap = _editHistory.Pop();
+                bitmap?.Dispose();
+            }
+            
+            // 通知UI撤销按钮状态改变
+            OnPropertyChanged(nameof(CanUndo));
+            
+            StatusMessage = "已清理历史记录";
+        }
+
+        /// <summary>
+        /// 保存当前状态到历史记录，用于撤销功能
+        /// </summary>
+        private void SaveToHistory()
         {
             if (_editedBitmap != null)
             {
-                try
-                {
-                    // 应用滤镜
-                    ApplyFilter(_editedBitmap, filterType);
-                    
-                    // 更新界面预览
-                    CurrentImage = BitmapToImageSource(_editedBitmap);
-                    
-                    // 标记为有未保存的更改
-                    HasUnsavedChanges = true;
-                    
-                    StatusMessage = $"已应用滤镜: {filterType}";
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"应用滤镜失败: {ex.Message}";
-                }
+                // 创建当前图像的副本并保存到历史记录栈中
+                Bitmap historyBitmap = new Bitmap(_editedBitmap);
+                _editHistory.Push(historyBitmap);
+                
+                // 通知UI界面撤销按钮状态改变
+                OnPropertyChanged(nameof(CanUndo));
+                
+                StatusMessage = "已保存编辑状态";
             }
         }
 
-        // 实现UI调用的接口方法，供视图绑定
-        private void ApplySelectedFilter()
+        /// <summary>
+        /// 撤销上一次编辑操作
+        /// </summary>
+        private void UndoLastEdit()
         {
-            if (SelectedFilter != null)
+            if (_editHistory.Count > 0)
             {
-                ApplyFilterToCurrentImage(SelectedFilter);
+                try
+                {
+                    // 先释放当前编辑中的位图
+                    _editedBitmap?.Dispose();
+                    
+                    // 从历史栈中取出上一次状态
+                    _editedBitmap = _editHistory.Pop();
+                    
+                    // 更新UI
+                    CurrentImage = BitmapToImageSource(_editedBitmap);
+                    
+                    // 标记为有未保存更改
+                    HasUnsavedChanges = true;
+                    
+                    StatusMessage = "已撤销上一步操作";
+                    
+                    // 通知UI撤销按钮状态改变
+                    OnPropertyChanged(nameof(CanUndo));
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"撤销失败: {ex.Message}";
+                }
             }
         }
     }

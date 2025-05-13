@@ -86,6 +86,7 @@ namespace SCPhotoTool.ViewModels
         public ICommand EditPhotoCommand { get; }
         public ICommand ViewPhotoCommand { get; }
         public ICommand DeletePhotoCommand { get; }
+        public ICommand EditTagsCommand { get; }
 
         public LibraryViewModel(
             IPhotoLibraryService photoLibraryService,
@@ -112,6 +113,7 @@ namespace SCPhotoTool.ViewModels
             EditPhotoCommand = new RelayCommand(p => EditPhoto(p as Photo));
             ViewPhotoCommand = new RelayCommand(p => ViewPhoto(p as Photo));
             DeletePhotoCommand = new RelayCommand(p => DeletePhotoAsync(p as Photo));
+            EditTagsCommand = new RelayCommand(p => EditPhotoTags(p as Photo));
 
             // 初始化搜索防抖动定时器
             _searchDebounceTimer = new DispatcherTimer
@@ -409,13 +411,28 @@ namespace SCPhotoTool.ViewModels
         {
             if (photo != null)
             {
-                // 将照片传递给编辑器视图模型
-                _editorViewModel.OpenImage(photo.FilePath);
-                
-                // 切换到编辑器视图
-                // 这里需要主视图模型提供的导航
-                // 由于主视图模型并不直接在这里访问，我们使用事件
-                RaiseNavigationRequested("Editor");
+                try
+                {
+                    // 确保文件存在
+                    if (!File.Exists(photo.FilePath))
+                    {
+                        Views.MessageWindow.ShowMessage($"找不到照片文件: {photo.FilePath}", "错误", Views.MessageWindow.MessageType.Error);
+                        return;
+                    }
+                    
+                    // 将照片传递给编辑器视图模型
+                    _editorViewModel.OpenImage(photo.FilePath);
+                    
+                    // 切换到编辑器视图
+                    RaiseNavigationRequested("Editor");
+                    
+                    StatusMessage = $"正在编辑照片: {Path.GetFileName(photo.FilePath)}";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"无法编辑照片: {ex.Message}";
+                    Views.MessageWindow.ShowMessage($"打开编辑器失败: {ex.Message}", "错误", Views.MessageWindow.MessageType.Error);
+                }
             }
         }
 
@@ -425,12 +442,34 @@ namespace SCPhotoTool.ViewModels
             {
                 try
                 {
-                    // 使用系统默认查看器打开
-                    System.Diagnostics.Process.Start(photo.FilePath);
+                    // 确保文件存在
+                    if (!File.Exists(photo.FilePath))
+                    {
+                        Views.MessageWindow.ShowMessage($"找不到照片文件: {photo.FilePath}", "错误", Views.MessageWindow.MessageType.Error);
+                        return;
+                    }
+                    
+                    // 创建并显示内置的照片查看器窗口
+                    Application.Current.Dispatcher.Invoke(() => {
+                        try
+                        {
+                            var viewerWindow = new Views.PhotoViewerWindow(photo.FilePath);
+                            viewerWindow.Owner = Application.Current.MainWindow;
+                            viewerWindow.ShowDialog();
+                            
+                            StatusMessage = $"已查看照片: {Path.GetFileName(photo.FilePath)}";
+                        }
+                        catch (Exception ex)
+                        {
+                            StatusMessage = $"无法打开照片查看器: {ex.Message}";
+                            Views.MessageWindow.ShowMessage($"打开照片查看器失败: {ex.Message}", "错误", Views.MessageWindow.MessageType.Error);
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
                     StatusMessage = $"无法打开照片: {ex.Message}";
+                    Views.MessageWindow.ShowMessage($"无法打开照片: {ex.Message}", "错误", Views.MessageWindow.MessageType.Error);
                 }
             }
         }
@@ -441,14 +480,13 @@ namespace SCPhotoTool.ViewModels
             {
                 try
                 {
-                    // 询问用户确认
-                    var result = System.Windows.MessageBox.Show(
+                    // 使用自制对话框询问用户确认
+                    bool? result = Views.MessageWindow.ShowMessage(
                         $"确定要删除照片 '{photo.Title ?? System.IO.Path.GetFileName(photo.FilePath)}' 吗？此操作无法撤销。",
                         "确认删除",
-                        System.Windows.MessageBoxButton.YesNo,
-                        System.Windows.MessageBoxImage.Warning);
+                        Views.MessageWindow.MessageType.Question);
                         
-                    if (result == System.Windows.MessageBoxResult.Yes)
+                    if (result == true)
                     {
                         IsBusy = true;
                         StatusMessage = "正在删除照片...";
@@ -462,8 +500,8 @@ namespace SCPhotoTool.ViewModels
                         
                         StatusMessage = "照片已删除";
                     }
-            }
-            catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     StatusMessage = $"删除照片失败: {ex.Message}";
                 }
@@ -485,6 +523,78 @@ namespace SCPhotoTool.ViewModels
         {
             _searchDebounceTimer.Stop();
             FilterPhotos();
+        }
+
+        private async void EditPhotoTags(Photo photo)
+        {
+            if (photo == null)
+                return;
+                
+            try
+            {
+                // 确保文件存在
+                if (!File.Exists(photo.FilePath))
+                {
+                    Views.MessageWindow.ShowMessage($"找不到照片文件: {photo.FilePath}", "错误", Views.MessageWindow.MessageType.Error);
+                    return;
+                }
+                
+                // 获取所有可用标签
+                var allTags = Tags.Select(t => t.Name).ToList();
+                
+                // 打开标签管理窗口
+                Application.Current.Dispatcher.Invoke(() => {
+                    var tagWindow = new Views.TagManagementWindow(photo.Tags, allTags);
+                    tagWindow.Owner = Application.Current.MainWindow;
+                    
+                    if (tagWindow.ShowDialog() == true && tagWindow.SelectedTags != null)
+                    {
+                        // 更新照片标签
+                        UpdatePhotoTagsAsync(photo, tagWindow.SelectedTags);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"编辑标签失败: {ex.Message}";
+                Views.MessageWindow.ShowMessage($"编辑标签失败: {ex.Message}", "错误", Views.MessageWindow.MessageType.Error);
+            }
+        }
+        
+        private async void UpdatePhotoTagsAsync(Photo photo, IEnumerable<string> newTags)
+        {
+            try
+            {
+                IsBusy = true;
+                StatusMessage = "正在更新标签...";
+                
+                // 更新照片标签
+                await _photoLibraryService.UpdatePhotoAsync(photo.Id, newTags, photo.Description);
+                
+                // 更新本地模型
+                photo.Tags.Clear();
+                foreach (var tag in newTags)
+                {
+                    photo.Tags.Add(tag);
+                }
+                
+                // 刷新标签列表
+                await LoadTagsAsync();
+                
+                // 应用筛选
+                FilterPhotos();
+                
+                StatusMessage = "标签已更新";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"更新标签失败: {ex.Message}";
+                Views.MessageWindow.ShowMessage($"更新标签失败: {ex.Message}", "错误", Views.MessageWindow.MessageType.Error);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
     }
 

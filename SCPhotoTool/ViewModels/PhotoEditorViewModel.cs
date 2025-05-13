@@ -413,10 +413,10 @@ namespace SCPhotoTool.ViewModels
                 await _settingsService.SaveSettingAsync("AddProgramWatermark", ShowWatermark);
                 
                 // 创建Services.CropArea实例并传递属性值
-                var cropRect = new System.Drawing.Rectangle(
+                var cropArea = new SCPhotoTool.Services.CropArea(
                     CropArea.X, CropArea.Y, CropArea.Width, CropArea.Height);
                 
-                string newPath = await _photoInfoService.CropImageAsync(SelectedImagePath, cropRect);
+                string newPath = await _photoInfoService.CropImageAsync(SelectedImagePath, cropArea);
                 
                 if (!string.IsNullOrEmpty(newPath))
                 {

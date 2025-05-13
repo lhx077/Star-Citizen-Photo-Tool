@@ -12,610 +12,268 @@
         mc:Ignorable="d"
         Title="星际公民摄影工具" Height="768" Width="1280" MinWidth="800" MinHeight="600"
         WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
         WindowStyle="None"
         AllowsTransparency="True"
-        Background="#162133"
-        TextElement.Foreground="White"
+        Background="Transparent"
+        DataContext="{Binding RelativeSource={RelativeSource Self}, Path=MainViewModel}"
+        FontFamily="{materialDesign:MaterialDesignFont}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="13"
         TextOptions.TextFormattingMode="Ideal"
-        TextOptions.TextRenderingMode="Auto"
-        FontFamily="{materialDesign:MaterialDesignFont}">
+        TextOptions.TextRenderingMode="Auto">
 
     <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/Converters.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-            
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-            
-            <!-- 视图模型与视图的数据模板 -->
-            <DataTemplate DataType="{x:Type viewmodels:CaptureViewModel}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- 工具栏 -->
-                    <materialDesign:Card Grid.Row="0" Margin="0,0,0,16" Padding="16" UniformCornerRadius="8" Background="#1E2842">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <StackPanel Orientation="Horizontal" Grid.Column="0">
-                                <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
-                                        Command="{Binding CaptureCommand}"
-                                        Margin="0,0,8,0"
-                                        ToolTip="截图"
-                                        Background="#283758" 
-                                        Foreground="#4C83FF"
-                                        BorderBrush="#4C83FF"
-                                        materialDesign:ButtonAssist.CornerRadius="6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Camera" Width="18" Height="18" Margin="0,0,8,0"/>
-                                        <TextBlock Text="截图"/>
-                                    </StackPanel>
-                                </Button>
-                                
-                                <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
-                                        Command="{Binding SaveCommand}"
-                                        Margin="0,0,8,0"
-                                        ToolTip="保存"
-                                        Background="#283758" 
-                                        Foreground="#4C83FF"
-                                        BorderBrush="#4C83FF"
-                                        materialDesign:ButtonAssist.CornerRadius="6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,8,0"/>
-                                        <TextBlock Text="保存"/>
-                                    </StackPanel>
-                                </Button>
-                                
-                                <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
-                                        Command="{Binding AddToLibraryCommand}"
-                                        Margin="0,0,8,0"
-                                        ToolTip="添加到库"
-                                        Background="#283758" 
-                                        Foreground="#4C83FF"
-                                        BorderBrush="#4C83FF"
-                                        materialDesign:ButtonAssist.CornerRadius="6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="LibraryPlus" Width="18" Height="18" Margin="0,0,8,0"/>
-                                        <TextBlock Text="添加到库"/>
-                                    </StackPanel>
-                                </Button>
-                                
-                                <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
-                                        Command="{Binding ClearCommand}"
-                                        ToolTip="清除"
-                                        Background="#283758" 
-                                        Foreground="#4C83FF"
-                                        BorderBrush="#4C83FF"
-                                        materialDesign:ButtonAssist.CornerRadius="6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Eraser" Width="18" Height="18" Margin="0,0,8,0"/>
-                                        <TextBlock Text="清除"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Column="1" 
-                                       VerticalAlignment="Center" 
-                                       HorizontalAlignment="Center">
-                                <TextBlock Text="{Binding StatusMessage}" 
-                                       Foreground="White"/>
-                                <TextBlock Text="{Binding GameVersionInfo}" 
-                                       Foreground="#4C83FF"
-                                       Visibility="{Binding IsGameConnected, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                       Margin="0,4,0,0"
-                                       FontSize="12"/>
-                            </StackPanel>
-                            
-                            <ProgressBar Grid.Column="2" 
-                                         IsIndeterminate="True" 
-                                         Width="100" 
-                                         Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                         Style="{StaticResource MaterialDesignCircularProgressBar}"
-                                         Value="0"
-                                         Foreground="#4C83FF"/>
-                        </Grid>
-                    </materialDesign:Card>
-                    
-                    <!-- 图像显示区域 -->
-                    <Border Grid.Row="1" Background="#192132" Margin="0" CornerRadius="8">
-                        <Grid>
-                            <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="16"/>
-                            
-                            <StackPanel Visibility="{Binding PreviewImage, Converter={StaticResource NullToVisibilityConverter}}"
-                                        VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <materialDesign:PackIcon Kind="ImageOutline" Width="64" Height="64" 
-                                                        HorizontalAlignment="Center" 
-                                                        Foreground="#4C83FF"/>
-                                <TextBlock Text="点击上方的截图按钮开始" 
-                                           Foreground="White" 
-                                           FontSize="18" 
-                                           Margin="0,16,0,0"
-                                           HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    
-                    <!-- 设置区域 -->
-                    <StackPanel Grid.Row="2" Margin="0,16,0,0">
-                        <materialDesign:Card Padding="16" UniformCornerRadius="8" Background="#1E2842">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="截图设置" 
-                                               FontWeight="Medium" 
-                                               Margin="0,0,0,8"
-                                               Foreground="White"/>
-                                    
-                                    <Grid Margin="0,8,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                            <TextBlock Text="截图模式" 
-                                                       Foreground="White" 
-                                                       Margin="0,0,0,4"/>
-                                            <ComboBox ItemsSource="{Binding Source={x:Type local:CaptureMode}, Converter={StaticResource EnumToItemsSource}}"
-                                                      SelectedItem="{Binding CaptureMode}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <TextBlock Text="{Binding Converter={StaticResource EnumDescriptionConverter}}"/>
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                        </StackPanel>
-                                        
-                                        <StackPanel Grid.Column="1" Margin="8,0,8,0">
-                                            <CheckBox Content="窗口模式时自动移除标题栏" 
-                                                      IsChecked="{Binding AutoRemoveTitleBar}" 
-                                                      Margin="0,0,0,8"
-                                  Foreground="White"/>
-                                                      
-                        <CheckBox Content="自动保存" 
-                                  IsChecked="{Binding AutoSave}" 
-                                                      Margin="0,0,0,8"
-                                                      Foreground="White"/>
-                                                      
-                                            <CheckBox Content="添加游戏信息水印" 
-                                                      IsChecked="{Binding AddGameInfoWatermark}" 
-                                                      Foreground="White"/>
-                                        </StackPanel>
-                                        
-                                        <StackPanel Grid.Column="2" Margin="8,0,0,0">
-                                            <TextBlock Text="水印文本" 
-                                                       Foreground="White" 
-                                                       Margin="0,0,0,4"/>
-                                            <TextBox Text="{Binding WatermarkText}" 
-                                                     materialDesign:HintAssist.Hint="支持{version}作为版本占位符"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </StackPanel>
-                                
-                                <StackPanel Grid.Column="1" Margin="16,0,0,0">
-                                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
-                                            Command="{Binding RefreshGameStatusCommand}"
-                                            Margin="0,0,0,8"
-                                            ToolTip="刷新游戏连接状态"
-                                            Background="#283758" 
-                                            Foreground="#4C83FF"
-                                            BorderBrush="#4C83FF"
-                                            materialDesign:ButtonAssist.CornerRadius="6">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Refresh" Width="18" Height="18" Margin="0,0,8,0"/>
-                                            <TextBlock Text="刷新游戏状态"/>
-                                        </StackPanel>
-                                    </Button>
-                                    
-                                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
-                                            Command="{Binding OpenGameCommand}"
-                                            ToolTip="连接游戏"
-                                            Background="#283758" 
-                                            Foreground="#4C83FF"
-                                            BorderBrush="#4C83FF"
-                                            materialDesign:ButtonAssist.CornerRadius="6">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Gamepad" Width="18" Height="18" Margin="0,0,8,0"/>
-                                            <TextBlock Text="连接游戏"/>
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-                        </materialDesign:Card>
-                        
-                        <!-- 最近截图 -->
-                        <materialDesign:Card Padding="16" UniformCornerRadius="8" Background="#1E2842" Margin="0,16,0,0"
-                                              Visibility="{Binding RecentScreenshots.Count, Converter={StaticResource CountToVisibilityConverter}}">
-                            <StackPanel>
-                                <TextBlock Text="最近截图" 
-                                           FontWeight="Medium" 
-                                           Margin="0,0,0,8"
-                                  Foreground="White"/>
-                                           
-                                <ListBox ItemsSource="{Binding RecentScreenshots}" 
-                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
-                                         Height="80">
-                                    <ListBox.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
-                                        </ItemsPanelTemplate>
-                                    </ListBox.ItemsPanel>
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource MaterialDesignFlatButton}"
-                                                    ToolTip="{Binding}"
-                                                    Padding="4">
-                                                <Image Source="{Binding Converter={StaticResource FilePathToImageConverter}}" 
-                                                       Width="60" Height="60" Stretch="Uniform"/>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </StackPanel>
-                        </materialDesign:Card>
-                    </StackPanel>
-                </Grid>
-            </DataTemplate>
-            
-            <DataTemplate DataType="{x:Type viewmodels:PhotoEditorViewModel}">
-                <views:PhotoEditorView/>
-            </DataTemplate>
-            
-            <DataTemplate DataType="{x:Type viewmodels:LibraryViewModel}">
-                <views:LibraryView/>
-            </DataTemplate>
-            
-            <DataTemplate DataType="{x:Type viewmodels:SettingsViewModel}">
-                <views:SettingsView/>
-            </DataTemplate>
-            
-            <DataTemplate DataType="{x:Type viewmodels:EditorViewModel}">
-                <views:PhotoEditorView/>
-            </DataTemplate>
-            
-            <DataTemplate DataType="{x:Type viewmodels:AboutViewModel}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
-                    <StackPanel Margin="32,24">
-                        <!-- 项目标志和标题 -->
-                        <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
-                            <materialDesign:PackIcon Kind="StarCircleOutline" Height="64" Width="64" Foreground="#4C83FF" HorizontalAlignment="Center"/>
-                            <TextBlock Text="星际公民摄影工具" FontSize="28" FontWeight="Bold" Foreground="#4C83FF" HorizontalAlignment="Center" Margin="0,12,0,0"/>
-                            <TextBlock Text="Star Citizen Photography Tool" FontSize="18" Foreground="#B0BEC5" HorizontalAlignment="Center" Margin="0,4,0,0"/>
-                            <TextBlock Text="{Binding Version, StringFormat=版本 {0}}" FontSize="14" Foreground="#78909C" HorizontalAlignment="Center" Margin="0,4,0,0"/>
-                        </StackPanel>
-
-                        <!-- 项目描述 -->
-                        <materialDesign:Card Background="#1E2842" UniformCornerRadius="12" Margin="0,0,0,24" Padding="24,16">
-                            <StackPanel>
-                                <TextBlock Text="项目简介" FontWeight="Bold" FontSize="16" Foreground="White" Margin="0,0,0,12"/>
-                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="14" Foreground="#CFD8DC" Margin="0,0,0,12"/>
-                                <TextBlock Text="{Binding Disclaimer}" TextWrapping="Wrap" FontSize="14" Foreground="#CFD8DC"/>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <!-- 主要功能介绍 -->
-                        <materialDesign:Card Background="#1E2842" UniformCornerRadius="12" Margin="0,0,0,24" Padding="24,16">
-                            <StackPanel>
-                                <TextBlock Text="主要功能" FontWeight="Bold" FontSize="16" Foreground="White" Margin="0,0,0,12"/>
-
-                                <Grid Margin="0,4,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
-                                        <materialDesign:PackIcon Kind="Camera" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="截图工具：支持全屏和游戏窗口截图，支持热键设置" TextWrapping="Wrap" Foreground="#CFD8DC"/>
-                                </Grid>
-
-                                <Grid Margin="0,4,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
-                                        <materialDesign:PackIcon Kind="ImageMultiple" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="照片库：管理游戏截图，支持标签分类和搜索功能" TextWrapping="Wrap" Foreground="#CFD8DC"/>
-                                </Grid>
-
-                                <Grid Margin="0,4,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
-                                        <materialDesign:PackIcon Kind="ImageEdit" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="照片编辑：基本的照片编辑功能，如亮度、对比度和饱和度调整" TextWrapping="Wrap" Foreground="#CFD8DC"/>
-                                </Grid>
-
-                                <Grid Margin="0,4,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="#2D3E6C" Margin="0,0,12,0">
-                                        <materialDesign:PackIcon Kind="Cog" Width="16" Height="16" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="设置：自定义截图保存路径、格式和质量等" TextWrapping="Wrap" Foreground="#CFD8DC"/>
-                                </Grid>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <!-- 技术栈 -->
-                        <materialDesign:Card Background="#1E2842" UniformCornerRadius="12" Margin="0,0,0,24" Padding="24,16">
-                            <StackPanel>
-                                <TextBlock Text="技术栈" FontWeight="Bold" FontSize="16" Foreground="White" Margin="0,0,0,12"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
-                                    <TextBlock Text="C# / .NET 6.0" Foreground="#CFD8DC"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
-                                    <TextBlock Text="WPF (Windows Presentation Foundation)" Foreground="#CFD8DC"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Material Design in XAML" Foreground="#CFD8DC"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
-                                    <TextBlock Text="MVVM 架构模式" Foreground="#CFD8DC"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                                    <TextBlock Text="• " Foreground="#4C83FF" FontWeight="Bold" Margin="0,0,8,0"/>
-                                    <TextBlock Text="依赖注入模式" Foreground="#CFD8DC"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <!-- 版权信息 -->
-                        <StackPanel HorizontalAlignment="Center" Margin="0,12,0,0">
-                            <TextBlock Text="{Binding Copyright}" Foreground="#78909C" FontSize="12" HorizontalAlignment="Center"/>
-                            <TextBlock Text="本软件仅供学习和交流使用" Foreground="#78909C" FontSize="12" HorizontalAlignment="Center" Margin="0,4,0,0"/>
-                            
-                            <Button Command="{Binding OpenProjectUrlCommand}" 
-                                    Style="{StaticResource MaterialDesignOutlinedButton}" 
-                                    HorizontalAlignment="Center"
-                                    Margin="0,16,0,0"
-                                    Background="#283758" 
-                                    Foreground="#4C83FF"
-                                    BorderBrush="#4C83FF">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Github" Width="18" Height="18" Margin="0,0,8,0"/>
-                                    <TextBlock Text="访问项目主页"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-            </DataTemplate>
-        
-        <Style x:Key="NavigationButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
-            <Setter Property="Height" Value="48" />
-            <Setter Property="Foreground" Value="White" />
+        <!-- 导航按钮样式 -->
+        <Style x:Key="NavButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Foreground" Value="#B0BEC5" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="16,0" />
             <Setter Property="Margin" Value="0,2" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Padding" Value="16,0" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="Transparent" />
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#22FFFFFF" />
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="8" />
         </Style>
-        
-        <Style x:Key="ModernCardStyle" TargetType="materialDesign:Card">
-            <Setter Property="Margin" Value="16" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="UniformCornerRadius" Value="12" />
-            <Setter Property="materialDesign:ShadowAssist.ShadowDepth" Value="Depth2" />
-            <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp4" />
-            <Setter Property="Background" Value="#182133" />
-        </Style>
-        
-        <Style x:Key="WindowControlButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
-            <Setter Property="Width" Value="46" />
-            <Setter Property="Height" Value="36" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#22FFFFFF" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        </ResourceDictionary>
     </Window.Resources>
 
-    <Grid>
-        <!-- 背景 -->
-        <Grid.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#151B2C" Offset="0"/>
-                <GradientStop Color="#101827" Offset="1"/>
-            </LinearGradientBrush>
-        </Grid.Background>
-        
-        <!-- 背景图片 -->
+    <Border CornerRadius="10" Background="{StaticResource SCDarkBlueBrush}">
         <Grid>
-            <Image Source="{StaticResource BackgroundImage}" Stretch="UniformToFill" Opacity="0.15"/>
-            <Rectangle Fill="#101827" Opacity="0.6"/>
-        </Grid>
-        
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- 自定义标题栏 -->
-            <Grid Height="48" Background="#1A2237" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <!-- 背景和装饰 -->
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="{StaticResource SCDarkBlue}" Offset="0"/>
+                    <GradientStop Color="{StaticResource SCMediumBlue}" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            
+            <!-- 星空背景 -->
+            <Grid>
+                <!-- 背景图片 -->
+                <Image Source="/Resources/background.png" Stretch="UniformToFill" Opacity="0.15">
+                    <Image.Effect>
+                        <BlurEffect Radius="2"/>
+                    </Image.Effect>
+                </Image>
                 
-                <!-- 标题和图标 -->
-                <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                    <materialDesign:PackIcon Kind="Camera" Height="24" Width="24" Foreground="#4C83FF" VerticalAlignment="Center"/>
-                    <TextBlock Text="星际公民摄影工具" FontSize="16" FontWeight="SemiBold" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="White"/>
-                </StackPanel>
+                <!-- 星空Canvas -->
+                <Canvas x:Name="StarCanvas" Panel.ZIndex="-1"/>
                 
-                <!-- 拖动区域 - 用于拖动窗口 -->
-                <Border Grid.Column="1" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"/>
-                
-                <!-- 窗口控制按钮 -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button Style="{StaticResource WindowControlButton}" Click="MinimizeButton_Click">
-                        <materialDesign:PackIcon Kind="WindowMinimize" Height="16" Width="16"/>
-                    </Button>
-                    <Button Style="{StaticResource WindowControlButton}" Click="MaximizeButton_Click">
-                        <materialDesign:PackIcon x:Name="MaximizeIcon" Kind="WindowMaximize" Height="16" Width="16"/>
-                    </Button>
-                    <Button Style="{StaticResource WindowControlButton}" Click="CloseButton_Click" Foreground="#EB5545">
-                        <materialDesign:PackIcon Kind="WindowClose" Height="16" Width="16"/>
-                    </Button>
-                </StackPanel>
+                <!-- 背景渐变叠加 -->
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#77050A14" Offset="0"/>
+                            <GradientStop Color="#770A1020" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
             </Grid>
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-            <!-- 主内容区域 -->
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="260"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- 侧边导航面板 -->
-                <Border Background="#192132" Margin="0" Padding="8">
+                <!-- 标题栏 -->
+                <Border Grid.Row="0" Height="50" Background="{StaticResource SCDarkAccentBrush}" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        
-                        <!-- 应用信息 -->
-                        <materialDesign:Card Background="#1E2842" UniformCornerRadius="12" Margin="8,8,8,16" Padding="16">
-                            <StackPanel>
-                                <materialDesign:PackIcon Kind="StarCircleOutline" Height="40" Width="40" Foreground="#4C83FF" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Star Citizen" FontSize="18" FontWeight="Bold" Foreground="#4C83FF" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                                <TextBlock Text="摄影助手" FontSize="14" Foreground="#B0BEC5" HorizontalAlignment="Center" Margin="0,4,0,8"/>
-                            </StackPanel>
-                        </materialDesign:Card>
-                        
-                        <!-- 导航菜单 -->
-                        <StackPanel Grid.Row="1" Margin="8,8,8,0">
-                            <TextBlock Text="主菜单" Foreground="#78909C" FontWeight="Medium" Margin="12,8,0,12"/>
-                            
-                            <Button Style="{StaticResource NavigationButton}" Command="{Binding NavigateToScreenshotCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="36" Height="36" CornerRadius="8" Background="#2D3E6C" VerticalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="Camera" Width="20" Height="20" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="截图工具" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="White"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <Button Style="{StaticResource NavigationButton}" Command="{Binding NavigateToLibraryCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="36" Height="36" CornerRadius="8" Background="#2D3E6C" VerticalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="ImageMultiple" Width="20" Height="20" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="图片库" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="White"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <Button Style="{StaticResource NavigationButton}" Command="{Binding NavigateToEditorCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="36" Height="36" CornerRadius="8" Background="#2D3E6C" VerticalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="ImageEdit" Width="20" Height="20" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="照片编辑" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="White"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <Button Style="{StaticResource NavigationButton}" Command="{Binding NavigateToSettingsCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="36" Height="36" CornerRadius="8" Background="#2D3E6C" VerticalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="Cog" Width="20" Height="20" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="设置" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="White"/>
-                                </StackPanel>
-                            </Button>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                            <Button Style="{StaticResource NavigationButton}" Command="{Binding NavigateToAboutCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="36" Height="36" CornerRadius="8" Background="#2D3E6C" VerticalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="Information" Width="20" Height="20" Foreground="#4C83FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="关于" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="White"/>
-                                </StackPanel>
+                        <!-- 标题 -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0,0,0">
+                            <Image Source="/Resources/app_icon.png" Height="22" Width="22" Margin="0,0,10,0"/>
+                            <TextBlock Text="星际公民摄影工具" VerticalAlignment="Center" FontSize="18" FontWeight="Medium" Foreground="White"/>
+                        </StackPanel>
+
+                        <!-- 窗口控制按钮 -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,8,0">
+                            <Button Style="{StaticResource MaterialDesignFlatButton}" Click="MinimizeButton_Click" Width="46" Height="46" Padding="4">
+                                <materialDesign:PackIcon Kind="WindowMinimize" Foreground="White" Width="24" Height="24"/>
+                            </Button>
+                            <Button Style="{StaticResource MaterialDesignFlatButton}" Click="MaximizeButton_Click" Width="46" Height="46" Padding="4">
+                                <materialDesign:PackIcon Kind="WindowMaximize" Foreground="White" Width="24" Height="24"/>
+                            </Button>
+                            <Button Style="{StaticResource MaterialDesignFlatButton}" Click="CloseButton_Click" Width="46" Height="46" Padding="4">
+                                <materialDesign:PackIcon Kind="Close" Foreground="White" Width="24" Height="24"/>
                             </Button>
                         </StackPanel>
-                        
-                        <!-- 游戏信息区域 -->
-                        <materialDesign:Card Grid.Row="2" Background="#1E2842" UniformCornerRadius="12" Margin="8,16" Padding="16">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                
-                                <TextBlock Text="游戏连接状态" FontWeight="Medium" Foreground="#78909C" Margin="0,0,0,8"/>
-                                
-                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-                                    <Ellipse Width="10" Height="10" Fill="{Binding GameConnectionStatus, Converter={StaticResource StatusToBrushConverter}}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding GameConnectionStatus}" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                
-                                <Button Grid.Row="2" Style="{StaticResource MaterialDesignFlatButton}" 
-                                        Command="{Binding ConnectToGameCommand}" 
-                                        Background="#283758" 
-                                        Foreground="#4C83FF" 
-                                        BorderThickness="0"
-                                        materialDesign:ButtonAssist.CornerRadius="8"
-                                        Height="36">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Connection" Width="18" Height="18" VerticalAlignment="Center"/>
-                                        <TextBlock Text="连接游戏" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
-                        </materialDesign:Card>
                     </Grid>
                 </Border>
 
-                <!-- 内容区域 -->
-                <materialDesign:Card Grid.Column="1" Style="{StaticResource ModernCardStyle}">
-                    <ContentControl Margin="16" Content="{Binding CurrentViewModel}"/>
-                </materialDesign:Card>
+                <!-- 主内容区 -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 导航菜单 -->
+                    <Border Grid.Column="0" Background="{StaticResource SCSpaceBlackBrush}" Opacity="0.7" Margin="0,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- 顶部应用信息 -->
+                            <StackPanel Grid.Row="0" Margin="0,20,0,20">
+                                <Image Source="/Resources/app_logo.png" Height="60" Width="60" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                <TextBlock Text="星际公民摄影工具" HorizontalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text="PHOTOGRAPHY SUITE" HorizontalAlignment="Center" FontSize="10" Foreground="#7A99DF" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <!-- 导航项 -->
+                            <StackPanel Grid.Row="1" Margin="16,20,16,0">
+                                <Button Content="截图捕获"
+                                        Command="{Binding NavigateCommand}" 
+                                        CommandParameter="Capture">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentViewModel}" Value="{x:Type viewmodels:CaptureViewModel}">
+                                                    <Setter Property="Background" Value="{StaticResource SCHighlightBlueBrush}" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                    <Setter Property="FontWeight" Value="Medium" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.ContentTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Camera" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </Button.ContentTemplate>
+                                </Button>
+
+                                <Button Content="库"
+                                        Command="{Binding NavigateCommand}" 
+                                        CommandParameter="Library">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentViewModel}" Value="{x:Type viewmodels:LibraryViewModel}">
+                                                    <Setter Property="Background" Value="{StaticResource SCHighlightBlueBrush}" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                    <Setter Property="FontWeight" Value="Medium" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.ContentTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="ImageMultiple" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </Button.ContentTemplate>
+                                </Button>
+
+                                <Button Content="编辑器"
+                                        Command="{Binding NavigateCommand}" 
+                                        CommandParameter="Editor">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentViewModel}" Value="{x:Type viewmodels:EditorViewModel}">
+                                                    <Setter Property="Background" Value="{StaticResource SCHighlightBlueBrush}" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                    <Setter Property="FontWeight" Value="Medium" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.ContentTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="ImageEdit" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </Button.ContentTemplate>
+                                </Button>
+
+                                <Button Content="设置"
+                                        Command="{Binding NavigateCommand}" 
+                                        CommandParameter="Settings">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentViewModel}" Value="{x:Type viewmodels:SettingsViewModel}">
+                                                    <Setter Property="Background" Value="{StaticResource SCHighlightBlueBrush}" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                    <Setter Property="FontWeight" Value="Medium" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.ContentTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Cog" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </Button.ContentTemplate>
+                                </Button>
+
+                                <Button Content="关于"
+                                        Command="{Binding NavigateCommand}" 
+                                        CommandParameter="About">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentViewModel}" Value="{x:Type viewmodels:AboutViewModel}">
+                                                    <Setter Property="Background" Value="{StaticResource SCHighlightBlueBrush}" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                    <Setter Property="FontWeight" Value="Medium" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.ContentTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Information" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </Button.ContentTemplate>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- 底部游戏状态 -->
+                            <Border Grid.Row="2" Height="60" Background="{StaticResource SCDarkSpaceBrush}" Margin="0,20,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <Border Grid.Column="0" Width="8" Background="{Binding GameConnectionStatus, Converter={StaticResource BoolToConnectionBrushConverter}}" HorizontalAlignment="Left"/>
+                                    
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding GameConnectionText}" FontSize="13" Foreground="White"/>
+                                        <TextBlock Text="{Binding GameVersionText}" FontSize="11" Foreground="#7A99DF" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- 内容区 -->
+                    <ContentPresenter Grid.Column="1" Content="{Binding CurrentViewModel}"/>
+                </Grid>
             </Grid>
         </Grid>
-    </Grid>
+    </Border>
 </Window> 

@@ -147,6 +147,28 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <materialDesign:Card Margin="8" Width="200" Height="240" UniformCornerRadius="4">
+                                        <materialDesign:Card.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#131E34" Offset="0"/>
+                                                <GradientStop Color="#0F1829" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </materialDesign:Card.Background>
+                                        
+                                        <materialDesign:Card.Effect>
+                                            <DropShadowEffect ShadowDepth="3" Direction="270" Color="#000C1F" Opacity="0.6" BlurRadius="10"/>
+                                        </materialDesign:Card.Effect>
+                                        
+                                        <materialDesign:Card.BorderBrush>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#2D4266" Offset="0"/>
+                                                <GradientStop Color="#203050" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </materialDesign:Card.BorderBrush>
+                                        
+                                        <materialDesign:Card.BorderThickness>
+                                            <Thickness>1</Thickness>
+                                        </materialDesign:Card.BorderThickness>
+                                        
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="*"/>
@@ -154,12 +176,24 @@
                                             </Grid.RowDefinitions>
                                             
                                             <!-- 照片缩略图 -->
-                                            <Border Grid.Row="0" Background="#111827">
-                                                <Image Source="{Binding ThumbnailImage}" 
-                                                       Stretch="Uniform"
-                                                       VerticalAlignment="Center"
-                                                       HorizontalAlignment="Center"
-                                                       Margin="8"/>
+                                            <Border Grid.Row="0" Background="#111827" CornerRadius="3" Margin="6,6,6,0">
+                                                <Border.Effect>
+                                                    <DropShadowEffect ShadowDepth="1" Direction="270" Color="#000A18" Opacity="0.5" BlurRadius="4"/>
+                                                </Border.Effect>
+                                                <Grid>
+                                                    <Image Source="{Binding ThumbnailImage}" 
+                                                           Stretch="Uniform"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="8"/>
+                                                    <Border Background="#0D1220" Height="24" VerticalAlignment="Top" Opacity="0.7">
+                                                        <TextBlock Text="{Binding DateTaken, StringFormat=yyyy-MM-dd}" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#B0C4E4" 
+                                                                   Margin="8,4"
+                                                                   HorizontalAlignment="Right"/>
+                                                    </Border>
+                                                </Grid>
                                             </Border>
                                             
                                             <!-- 照片信息区 -->
@@ -225,6 +259,41 @@
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
+                                            
+                                            <!-- 添加右键菜单 -->
+                                            <Grid.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="编辑标签" 
+                                                              Command="{Binding DataContext.EditTagsCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="Tag" Foreground="#5C93FF"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="查看" 
+                                                              Command="{Binding DataContext.ViewPhotoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="Eye" Foreground="#5C93FF"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="编辑" 
+                                                              Command="{Binding DataContext.EditPhotoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="Edit" Foreground="#5C93FF"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <Separator/>
+                                                    <MenuItem Header="删除" 
+                                                              Command="{Binding DataContext.DeletePhotoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <materialDesign:PackIcon Kind="DeleteOutline" Foreground="#FF5252"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Grid.ContextMenu>
                                         </Grid>
                                     </materialDesign:Card>
                                 </DataTemplate>

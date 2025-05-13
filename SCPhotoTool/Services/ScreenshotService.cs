@@ -89,14 +89,35 @@ namespace SCPhotoTool.Services
         {
             return await Task.Run(() =>
             {
-                double screenWidth = SystemParameters.PrimaryScreenWidth;
-                double screenHeight = SystemParameters.PrimaryScreenHeight;
+                // 获取实际屏幕尺寸（包括所有显示器）
+                var allScreens = System.Windows.Forms.Screen.AllScreens;
+                int minX = 0, minY = 0, maxX = 0, maxY = 0;
+                
+                // 计算所有屏幕的边界
+                foreach (var screen in allScreens)
+                {
+                    if (screen.Bounds.Left < minX) minX = screen.Bounds.Left;
+                    if (screen.Bounds.Top < minY) minY = screen.Bounds.Top;
+                    if (screen.Bounds.Right > maxX) maxX = screen.Bounds.Right;
+                    if (screen.Bounds.Bottom > maxY) maxY = screen.Bounds.Bottom;
+                }
+                
+                int totalWidth = maxX - minX;
+                int totalHeight = maxY - minY;
 
-                Bitmap screenshot = new Bitmap((int)screenWidth, (int)screenHeight);
+                // 创建足够大的位图
+                Bitmap screenshot = new Bitmap(totalWidth, totalHeight);
 
                 using (Graphics g = Graphics.FromImage(screenshot))
                 {
-                    g.CopyFromScreen(0, 0, 0, 0, new Size((int)screenWidth, (int)screenHeight));
+                    // 设置高质量
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                    g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                    g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                    
+                    // 复制所有屏幕的内容
+                    g.CopyFromScreen(minX, minY, 0, 0, new Size(totalWidth, totalHeight));
                 }
 
                 return screenshot;
@@ -194,6 +215,7 @@ namespace SCPhotoTool.Services
                     AreaSelectedInfo selectedArea = null;
                     
                     Application.Current.Dispatcher.Invoke(() => {
+                        // 使用系统缩放因子来修正屏幕坐标
                         var areaSelectWindow = new Views.AreaSelectWindow(fullScreenBitmap);
                         if (areaSelectWindow.ShowDialog() == true)
                         {
@@ -204,16 +226,38 @@ namespace SCPhotoTool.Services
                     // 如果用户取消了选择，返回null
                     if (selectedArea == null)
                     {
+                        fullScreenBitmap.Dispose();
                         return null;
                     }
                     
-                    // 获取选中区域的截图
-                    Bitmap screenshot = new Bitmap(selectedArea.Width, selectedArea.Height);
-
+                    // 验证选区坐标是否有效
+                    int x = Math.Max(0, selectedArea.X);
+                    int y = Math.Max(0, selectedArea.Y);
+                    int width = Math.Min(fullScreenBitmap.Width - x, selectedArea.Width);
+                    int height = Math.Min(fullScreenBitmap.Height - y, selectedArea.Height);
+                    
+                    // 确保截图区域有效
+                    if (width <= 0 || height <= 0)
+                    {
+                        fullScreenBitmap.Dispose();
+                        return null;
+                    }
+                    
+                    // 直接从全屏位图中裁剪选定区域，避免二次截图可能造成的偏移
+                    Bitmap screenshot = new Bitmap(width, height);
                     using (Graphics g = Graphics.FromImage(screenshot))
                     {
-                        g.CopyFromScreen(selectedArea.X, selectedArea.Y, 0, 0, 
-                            new Size(selectedArea.Width, selectedArea.Height));
+                        // 设置高质量
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                        
+                        // 从全屏位图裁剪出选定区域
+                        g.DrawImage(fullScreenBitmap, 
+                                   new Rectangle(0, 0, width, height),
+                                   new Rectangle(x, y, width, height),
+                                   GraphicsUnit.Pixel);
                     }
                     
                     // 释放全屏位图
@@ -516,14 +560,35 @@ namespace SCPhotoTool.Services
 
         private Bitmap CaptureScreen()
         {
-            double screenWidth = SystemParameters.PrimaryScreenWidth;
-            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            // 获取实际屏幕尺寸（包括所有显示器）
+            var allScreens = System.Windows.Forms.Screen.AllScreens;
+            int minX = 0, minY = 0, maxX = 0, maxY = 0;
+            
+            // 计算所有屏幕的边界
+            foreach (var screen in allScreens)
+            {
+                if (screen.Bounds.Left < minX) minX = screen.Bounds.Left;
+                if (screen.Bounds.Top < minY) minY = screen.Bounds.Top;
+                if (screen.Bounds.Right > maxX) maxX = screen.Bounds.Right;
+                if (screen.Bounds.Bottom > maxY) maxY = screen.Bounds.Bottom;
+            }
+            
+            int totalWidth = maxX - minX;
+            int totalHeight = maxY - minY;
 
-            Bitmap screenshot = new Bitmap((int)screenWidth, (int)screenHeight);
+            // 创建足够大的位图
+            Bitmap screenshot = new Bitmap(totalWidth, totalHeight);
 
             using (Graphics g = Graphics.FromImage(screenshot))
             {
-                g.CopyFromScreen(0, 0, 0, 0, new Size((int)screenWidth, (int)screenHeight));
+                // 设置高质量
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                
+                // 复制所有屏幕的内容
+                g.CopyFromScreen(minX, minY, 0, 0, new Size(totalWidth, totalHeight));
             }
 
             return screenshot;

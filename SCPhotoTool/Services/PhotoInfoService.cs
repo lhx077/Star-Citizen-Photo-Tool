@@ -335,9 +335,9 @@ namespace SCPhotoTool.Services
                                     case FilterType.FilmNoir:
                                         // 使用简易黑白效果
                                         filteredImage = ApplyBlackAndWhiteFilter(new Bitmap(originalImage));
-                                        break;
-                                }
-                                
+                                break;
+                        }
+                        
                                 // 如果已经在特殊情况下设置了filteredImage，就不需要再创建
                                 if (filteredImage == null)
                                 {
@@ -2080,8 +2080,8 @@ namespace SCPhotoTool.Services
                         using (ImageAttributes imageAttributes = new ImageAttributes())
                         {
                             // 设置颜色矩阵
-                            imageAttributes.SetColorMatrix(colorMatrix);
-                            
+                imageAttributes.SetColorMatrix(colorMatrix);
+                
                             // 创建图形对象
                             using (Graphics graphics = Graphics.FromImage(bitmap))
                             {
@@ -2139,16 +2139,16 @@ namespace SCPhotoTool.Services
                             new float[] {contrastScale, 0, 0, 0, 0},
                             new float[] {0, contrastScale, 0, 0, 0},
                             new float[] {0, 0, contrastScale, 0, 0},
-                            new float[] {0, 0, 0, 1, 0},
+                new float[] {0, 0, 0, 1, 0},
                             new float[] {-0.5f * (contrastScale - 1), -0.5f * (contrastScale - 1), -0.5f * (contrastScale - 1), 0, 1}
                         });
-                        
+            
                         // 创建图像属性对象
                         using (ImageAttributes imageAttributes = new ImageAttributes())
-                        {
+            {
                             // 设置颜色矩阵
-                            imageAttributes.SetColorMatrix(colorMatrix);
-                            
+                imageAttributes.SetColorMatrix(colorMatrix);
+                
                             // 创建图形对象
                             using (Graphics graphics = Graphics.FromImage(bitmap))
                             {
@@ -2212,16 +2212,16 @@ namespace SCPhotoTool.Services
                             new float[] {satLumR + saturationScale, satLumG, satLumB, 0, 0},
                             new float[] {satLumR, satLumG + saturationScale, satLumB, 0, 0},
                             new float[] {satLumR, satLumG, satLumB + saturationScale, 0, 0},
-                            new float[] {0, 0, 0, 1, 0},
+                new float[] {0, 0, 0, 1, 0},
                             new float[] {0, 0, 0, 0, 1}
                         });
-                        
+            
                         // 创建图像属性对象
                         using (ImageAttributes imageAttributes = new ImageAttributes())
-                        {
+            {
                             // 设置颜色矩阵
-                            imageAttributes.SetColorMatrix(colorMatrix);
-                            
+                imageAttributes.SetColorMatrix(colorMatrix);
+                
                             // 创建图形对象
                             using (Graphics graphics = Graphics.FromImage(bitmap))
                             {
@@ -3872,7 +3872,7 @@ namespace SCPhotoTool.Services
     /// <summary>
     /// 照片信息类
     /// </summary>
-   public class PhotoInfo
+    public class PhotoInfo
     {
         /// <summary>
         /// 照片标题
@@ -3985,10 +3985,50 @@ namespace SCPhotoTool.Services
     /// </summary>
     public enum CompositionType
     {
+        /// <summary>
+        /// 无构图辅助
+        /// </summary>
+        None,
+        
+        /// <summary>
+        /// 三分法构图
+        /// </summary>
         RuleOfThirds,
+        
+        /// <summary>
+        /// 黄金比例构图
+        /// </summary>
         GoldenRatio,
+        
+        /// <summary>
+        /// 对角线构图
+        /// </summary>
         Diagonal,
-        Grid
+        
+        /// <summary>
+        /// 网格构图
+        /// </summary>
+        Grid,
+        
+        /// <summary>
+        /// 中心构图
+        /// </summary>
+        Center,
+        
+        /// <summary>
+        /// 对称构图
+        /// </summary>
+        Symmetry,
+        
+        /// <summary>
+        /// 引导线构图
+        /// </summary>
+        LeadingLines,
+        
+        /// <summary>
+        /// 框架构图
+        /// </summary>
+        Framing
     }
     
     /// <summary>
@@ -3996,11 +4036,34 @@ namespace SCPhotoTool.Services
     /// </summary>
     public enum FilmAspectRatio
     {
-        Standard,    // 4:3
-        Widescreen,  // 16:9
-        CinemaScope, // 2.35:1
-        IMAX,        // 1.43:1
-        Anamorphic,  // 2.39:1
-        Academy      // 1.85:1
+        /// <summary>
+        /// 标准宽高比 (4:3)
+        /// </summary>
+        Standard,
+        
+        /// <summary>
+        /// 宽屏宽高比 (16:9)
+        /// </summary>
+        Widescreen,
+        
+        /// <summary>
+        /// 电影范围宽高比 (2.35:1)
+        /// </summary>
+        CinemaScope,
+        
+        /// <summary>
+        /// IMAX宽高比 (1.43:1)
+        /// </summary>
+        IMAX,
+        
+        /// <summary>
+        /// 变形宽高比 (2.39:1)
+        /// </summary>
+        Anamorphic,
+        
+        /// <summary>
+        /// 学院宽高比 (1.85:1)
+        /// </summary>
+        Academy
     }
-}
+} 

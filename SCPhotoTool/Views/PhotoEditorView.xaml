@@ -45,13 +45,40 @@
                             </StackPanel>
                         </Button>
                         
-                        <Button Style="{StaticResource MaterialDesignFlatButton}" Margin="8,0,0,0"
+                        <Button Style="{StaticResource MaterialDesignFlatButton}" 
                                 Command="{Binding SaveImageCommand}"
-                                ToolTip="保存图片" 
-                                Foreground="#5C93FF">
+                                Margin="0,4"
+                                ToolTip="保存"
+                                Background="#283758" 
+                                Foreground="#4C83FF">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" />
                                 <TextBlock Text="保存" Margin="8,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                Command="{Binding SaveImageAsCommand}"
+                                Margin="0,4"
+                                ToolTip="另存为"
+                                Background="#283758" 
+                                Foreground="#4C83FF">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ContentSaveOutline" Width="18" Height="18" />
+                                <TextBlock Text="另存为" Margin="8,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                Command="{Binding UndoCommand}"
+                                Margin="0,4"
+                                ToolTip="撤销"
+                                Background="#283758" 
+                                Foreground="#4C83FF"
+                                IsEnabled="{Binding CanUndo}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Undo" Width="18" Height="18" />
+                                <TextBlock Text="撤销" Margin="8,0,0,0" />
                             </StackPanel>
                         </Button>
                         

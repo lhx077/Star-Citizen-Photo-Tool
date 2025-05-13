@@ -20,7 +20,7 @@
         TextOptions.TextRenderingMode="Auto"
         FontFamily="{materialDesign:MaterialDesignFont}">
     
-    <Border CornerRadius="12" Background="#1E2842" Effect="{materialDesign:ShadowDepth5}">
+    <Border CornerRadius="12" Background="#1E2842" materialDesign:ShadowAssist.ShadowDepth="Depth5">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="42"/>
