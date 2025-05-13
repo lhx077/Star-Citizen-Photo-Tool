@@ -1,4 +1,5 @@
 # Star Citizen Photography Tool
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lhx077/Star-Citizen-Photo-Tool)
 
 A powerful photography tool designed for Star Citizen players that helps capture, manage, and edit screenshots.
 
