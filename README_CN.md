@@ -55,7 +55,7 @@
 
 ## 致谢
 
-- 感谢Stella Vanguard Squadron的大力支持
+- 感谢Stella-Vanguard-Squadron的大力支持
 - 感谢星际公民社区的灵感
 - 感谢Material Design for WPF提供的UI组件
 
