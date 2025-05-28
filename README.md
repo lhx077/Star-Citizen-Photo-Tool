@@ -56,6 +56,7 @@ See the [LICENSE](LICENSE) file for details. This software is provided for refer
 
 ## Acknowledgements
 
+- Thanks to the Stella Vanguard Squadron for the strongest support
 - Thanks to the Star Citizen community for inspiration
 - Material Design for WPF for the UI components
 
